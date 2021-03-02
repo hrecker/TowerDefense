@@ -1,11 +1,15 @@
 # TowerDefense (working title)
-TowerDefense is an in-development tower defense game (shocker) built using [Phaser 3.52.0 "Crusch"](https://phaser.io/) .
+TowerDefense is an in-development tower defense game (shocker) built using [Phaser 3.52.0](https://phaser.io/) .
 
 # Game Overview
 TBD
 
 # Running the game yourself
-This repository is structured to serve the game locally with [parcel](https://parceljs.org/getting_started.html). Start parcel pointing at the webroot/index.html entry file.
+[Parcel](https://parceljs.org/getting_started.html) is used to serve and build the files for the game. Run
+```
+npm start
+```
+to start it up locally.
 
 # Credits
 TBD

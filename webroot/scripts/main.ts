@@ -1,6 +1,8 @@
+import 'phaser';
+
 import { MainScene } from "./scenes/MainScene";
 
-var config = {
+var config: Phaser.Types.Core.GameConfig = {
     width: 800,
     height: 600,
     physics: {

@@ -1,0 +1,17 @@
+{
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hrecker/TowerDefense.git"
+  },
+  "author": "Henry Recker",
+  "license": "MIT",
+  "scripts": {
+    "start": "set BROWSERSLIST_IGNORE_OLD_DATA=1&& parcel webroot/index.html",
+    "build": "parcel build webroot/index.html"
+  },
+  "devDependencies": {
+    "cssnano": "^4.1.10",
+    "phaser": "^3.52.0",
+    "typescript": "^4.2.2"
+  }
+}
