@@ -17,6 +17,7 @@ export class MainScene extends Phaser.Scene {
     preload() {
         this.load.image("ship", "assets/sprites/ship.png");
         this.load.image("target", "assets/sprites/target.png");
+        this.load.image("block", "assets/sprites/block.png");
     }
 
     addPhysicsImage(x: number, y: number, name: string) {
@@ -30,9 +31,20 @@ export class MainScene extends Phaser.Scene {
 
     create() {
         this.cameras.main.setBackgroundColor(backgroundColor);
-        targetSprite = this.add.image(-1000, -1000, "target");
+
+        let blocks = this.physics.add.staticGroup({
+            key: "block",
+            frameQuantity: 12
+        })
+        Phaser.Actions.PlaceOnCircle(blocks.getChildren(), new Phaser.Geom.Circle(400, 300, 250));
+        blocks.refresh();
+
         ship = this.addPhysicsImage(400, 300, "ship");
         ship.body.setMaxSpeed(shipMaxSpeed);
+
+        this.physics.add.collider(blocks, ship);
+
+        targetSprite = this.add.image(-1000, -1000, "target");
         this.setTarget(600, 300);
 
         this.input.on('pointerdown', (pointer) => {
