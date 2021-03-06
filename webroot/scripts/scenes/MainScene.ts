@@ -39,10 +39,17 @@ export class MainScene extends Phaser.Scene {
         Phaser.Actions.PlaceOnCircle(blocks.getChildren(), new Phaser.Geom.Circle(400, 300, 250));
         blocks.refresh();
 
+        let floor = this.add.tileSprite(400, 608, 800, 64, "block");
+        let ceiling = this.add.tileSprite(400, 0, 800, 64, "block");
+        let left = this.add.tileSprite(0, 304, 64, 544, "block");
+        let right = this.add.tileSprite(800, 304, 64, 544, "block");
+        let walls = this.physics.add.staticGroup([floor, ceiling, left, right]);
+
         ship = this.addPhysicsImage(400, 300, "ship");
         ship.body.setMaxSpeed(shipMaxSpeed);
 
         this.physics.add.collider(blocks, ship);
+        this.physics.add.collider(walls, ship);
 
         targetSprite = this.add.image(-1000, -1000, "target");
         this.setTarget(600, 300);
