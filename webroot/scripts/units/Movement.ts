@@ -4,18 +4,16 @@
 // Based on a (possibly moving) body, a stationary target, and the max acceleration of the body, 
 // calculate the direction the body should accelerate to hit the target.
 export function homingDirection(body : Phaser.Physics.Arcade.Body, target: Phaser.Math.Vector2, maxAcc: number): Phaser.Math.Vector2 {
-    // Have to make a copy of things so they don't get modified outside the method
-    let t = new Phaser.Math.Vector2(target);
-
-    let dirToImpact = t.subtract(body.center);
+    let dirToImpact = target.clone().subtract(body.center);
+    let dirtoImpactNorm = dirToImpact.clone().normalize();
     if (body.velocity.equals(Phaser.Math.Vector2.ZERO)) {
-        return dirToImpact;
+        return dirtoImpactNorm;
     }
-    // Again make a copy here so the actual body isn't modified
-    let relativeTargetVel = new Phaser.Math.Vector2(body.velocity).negate();
+    // Get relative velocity of target from body's frame of reference
+    let relativeTargetVel = body.velocity.clone().negate();
 
     // Component of relative target velocity towards the body
-    let v = new Phaser.Math.Vector2(relativeTargetVel).negate().dot(dirToImpact.normalize());
+    let v = relativeTargetVel.clone().negate().dot(dirtoImpactNorm);
 
     // Time estimate for impact
     let eta = (-v / maxAcc) + Math.sqrt(Math.pow(v, 2) / Math.pow(maxAcc, 2) + (2 * dirToImpact.length() / maxAcc));

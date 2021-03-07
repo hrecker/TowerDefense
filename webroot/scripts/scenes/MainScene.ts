@@ -6,7 +6,7 @@ let target : Phaser.Math.Vector2;
 let targetSprite : Phaser.GameObjects.Image;
 const shipMaxSpeed = 300;
 const shipAcceleration = 1000;
-const shipMaxAngularVelocity = 0.2;
+const shipMaxAngularVelocity = 0.1;
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -61,12 +61,20 @@ export class MainScene extends Phaser.Scene {
     }
 
     update() {
+        // Get direction ship should move to hit target
+        let homingDir = homingDirection(ship.body, target, shipAcceleration);
+        let targetAngle = homingDir.clone().add(ship.body.center);
+
         // Rotate towards the target
-        let angleBetween = Phaser.Math.Angle.BetweenPoints(ship.body.center, target);
+        let angleBetween = Phaser.Math.Angle.BetweenPoints(ship.body.center, targetAngle);
         ship.setRotation(Phaser.Math.Angle.RotateTo(ship.rotation, angleBetween, shipMaxAngularVelocity));
 
-        // Accelerate towards the target
-        let direction = homingDirection(ship.body, target, shipAcceleration);
-        ship.setAcceleration(direction.x * shipAcceleration, direction.y * shipAcceleration);
+        // Scale acceleration based on if the ship is facing in the right direction
+        let right = Phaser.Math.Vector2.RIGHT.clone();
+        let shipDir = right.rotate(Phaser.Math.Angle.Normalize(ship.rotation));
+        let accel = shipAcceleration * shipDir.dot(homingDir) / shipDir.length();
+
+        // Accelerate in the direction the ship is facing
+        ship.setAcceleration(shipDir.x * accel, shipDir.y * accel);
     }
 }
