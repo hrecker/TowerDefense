@@ -1,0 +1,14 @@
+{
+    // Chrome debug configuration
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:1234",
+            "webRoot": "${workspaceFolder}/TowerDefense",
+            "breakOnLoad": true,
+        }
+    ]
+}

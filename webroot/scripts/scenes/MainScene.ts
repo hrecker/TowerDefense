@@ -1,4 +1,5 @@
 import { backgroundColor } from "../util/Util";
+import { homingDirection } from "../units/Movement";
 
 let ship : Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
 let target : Phaser.Math.Vector2;
@@ -64,9 +65,8 @@ export class MainScene extends Phaser.Scene {
         let angleBetween = Phaser.Math.Angle.BetweenPoints(ship.body.center, target);
         ship.setRotation(Phaser.Math.Angle.RotateTo(ship.rotation, angleBetween, shipMaxAngularVelocity));
 
-        // Accelerate in the direction the ship is facing
-        let right = new Phaser.Math.Vector2(1, 0);
-        let direction = right.rotate(Phaser.Math.Angle.Normalize(ship.rotation));
+        // Accelerate towards the target
+        let direction = homingDirection(ship.body, target, shipAcceleration);
         ship.setAcceleration(direction.x * shipAcceleration, direction.y * shipAcceleration);
     }
 }
