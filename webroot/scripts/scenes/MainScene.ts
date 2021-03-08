@@ -76,12 +76,15 @@ export class MainScene extends Phaser.Scene {
 
         // Ship
         ship = this.addPhysicsImage(200, 200, "ship");
-        ship.setBodySize(12, 12);
+        ship.body.setCircle(10, 6, 6);
+        //ship.setBodySize(12, 12);
+        //ship.
         ship.body.setMaxSpeed(shipMaxSpeed);
 
         this.physics.add.collider(blockLayer, ship);
+        //this.physics.add.co
 
-        navMesh = this["navMeshPlugin"].buildMeshFromTiled("mesh", navMeshLayer, 4);
+        navMesh = this["navMeshPlugin"].buildMeshFromTiled("mesh", navMeshLayer, 8);
         // Visualize the underlying navmesh
         //navMesh.enableDebug(); 
         /*navMesh.debugDrawMesh({
@@ -92,7 +95,7 @@ export class MainScene extends Phaser.Scene {
         });*/
 
         targetSprite = this.add.image(-1000, -1000, "target");
-        this.setPathTarget(300, 300);
+        //this.setPathTarget(300, 300);
 
         this.input.on('pointerdown', (pointer) => {
             this.setPathTarget(pointer.x, pointer.y);
@@ -100,6 +103,10 @@ export class MainScene extends Phaser.Scene {
     }
 
     update() {
+        if (!target) {
+            return;
+        }
+
         // Get direction ship should move to hit target
         let homingDir = homingDirection(ship.body, target, shipAcceleration);
         let targetAngle = homingDir.clone().add(ship.body.center);
