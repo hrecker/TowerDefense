@@ -33,27 +33,19 @@ export class MainScene extends Phaser.Scene {
     create() {
         this.cameras.main.setBackgroundColor(backgroundColor);
 
-        let blocks = this.physics.add.staticGroup({
-            key: "block",
-            frameQuantity: 12
-        })
-        Phaser.Actions.PlaceOnCircle(blocks.getChildren(), new Phaser.Geom.Circle(400, 300, 250));
-        blocks.refresh();
-
-        let floor = this.add.tileSprite(400, 608, 800, 64, "block");
-        let ceiling = this.add.tileSprite(400, 0, 800, 64, "block");
-        let left = this.add.tileSprite(0, 304, 64, 544, "block");
-        let right = this.add.tileSprite(800, 304, 64, 544, "block");
+        let floor = this.add.tileSprite(304, 592, 608, 32, "block");
+        let ceiling = this.add.tileSprite(304, 16, 608, 32, "block");
+        let left = this.add.tileSprite(16, 304, 32, 544, "block");
+        let right = this.add.tileSprite(592, 304, 32, 544, "block");
         let walls = this.physics.add.staticGroup([floor, ceiling, left, right]);
 
-        ship = this.addPhysicsImage(400, 300, "ship");
+        ship = this.addPhysicsImage(200, 200, "ship");
         ship.body.setMaxSpeed(shipMaxSpeed);
 
-        this.physics.add.collider(blocks, ship);
         this.physics.add.collider(walls, ship);
 
         targetSprite = this.add.image(-1000, -1000, "target");
-        this.setTarget(600, 300);
+        this.setTarget(400, 400);
 
         this.input.on('pointerdown', (pointer) => {
             this.setTarget(pointer.x, pointer.y);
@@ -69,12 +61,7 @@ export class MainScene extends Phaser.Scene {
         let angleBetween = Phaser.Math.Angle.BetweenPoints(ship.body.center, targetAngle);
         ship.setRotation(Phaser.Math.Angle.RotateTo(ship.rotation, angleBetween, shipMaxAngularVelocity));
 
-        // Scale acceleration based on if the ship is facing in the right direction
-        let right = Phaser.Math.Vector2.RIGHT.clone();
-        let shipDir = right.rotate(Phaser.Math.Angle.Normalize(ship.rotation));
-        let accel = shipAcceleration * shipDir.dot(homingDir) / shipDir.length();
-
-        // Accelerate in the direction the ship is facing
-        ship.setAcceleration(shipDir.x * accel, shipDir.y * accel);
+        // Accelerate towards the target
+        ship.setAcceleration(homingDir.x * shipAcceleration, homingDir.y * shipAcceleration);
     }
 }
