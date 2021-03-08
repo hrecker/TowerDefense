@@ -70,7 +70,7 @@ export class MainScene extends Phaser.Scene {
         // Room tiles
         const roomMap = this.make.tilemap({ key: "room1" });
         const tileset = roomMap.addTilesetImage("OneBlock", "block");
-        let blockLayer = roomMap.createLayer(0, tileset);//, 32, 32);
+        let blockLayer = roomMap.createLayer(0, tileset);
         let navMeshLayer = roomMap.getObjectLayer("navmesh");
         blockLayer.setCollisionByProperty({ collides: true });
 
@@ -79,11 +79,9 @@ export class MainScene extends Phaser.Scene {
         ship.setScale(0.5);
         ship.body.setMaxSpeed(shipMaxSpeed);
 
-        //this.physics.add.collider(walls, ship);
         this.physics.add.collider(blockLayer, ship);
 
-        //navMesh = this.navMeshPlugin.buildMeshFromTilemap("mesh", roomMap, [blockLayer]);
-        navMesh = this.navMeshPlugin.buildMeshFromTiled("mesh", navMeshLayer, 4);
+        navMesh = this["navMeshPlugin"].buildMeshFromTiled("mesh", navMeshLayer, 4);
         // Visualize the underlying navmesh
         //navMesh.enableDebug(); 
         /*navMesh.debugDrawMesh({
