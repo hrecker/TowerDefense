@@ -76,7 +76,7 @@ export class MainScene extends Phaser.Scene {
 
         // Ship
         ship = this.addPhysicsImage(200, 200, "ship");
-        ship.setScale(0.5);
+        ship.setBodySize(12, 12);
         ship.body.setMaxSpeed(shipMaxSpeed);
 
         this.physics.add.collider(blockLayer, ship);
