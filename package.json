@@ -12,6 +12,7 @@
   "devDependencies": {
     "cssnano": "^4.1.10",
     "phaser": "^3.52.0",
-    "typescript": "^4.2.2"
+    "typescript": "^4.2.2",
+    "phaser-navmesh": "2.2.1"
   }
 }

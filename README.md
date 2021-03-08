@@ -12,4 +12,4 @@ npm start
 to start it up locally.
 
 # Credits
-TBD
+phaser-navmesh plugin from https://github.com/mikewesthad/navmesh

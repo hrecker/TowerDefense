@@ -3,10 +3,15 @@ import { homingDirection } from "../units/Movement";
 
 let ship : Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
 let target : Phaser.Math.Vector2;
+let shipPath : Phaser.Geom.Point[];
+let currentPathIndex = 0;
 let targetSprite : Phaser.GameObjects.Image;
+let navMesh;
 const shipMaxSpeed = 300;
 const shipAcceleration = 1000;
 const shipMaxAngularVelocity = 0.1;
+// How close the ship needs to be before it has officially "made it" to a node
+const pathDistanceCheck = 16;
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -27,39 +32,72 @@ export class MainScene extends Phaser.Scene {
         return this.physics.add.image(x, y, name);
     }
 
-    setTarget(x: number, y: number) {
-        target = new Phaser.Math.Vector2(x, y);
+    setPathTarget(x: number, y: number) {
+        shipPath = navMesh.findPath(
+            { x: ship.body.center.x, y: ship.body.center.y }, 
+            { x: x, y: y });
+        if (shipPath) {
+            currentPathIndex = 1;
+            this.setTarget(shipPath[currentPathIndex]);
+        } else {
+            console.log("Couldn't find a path!");
+            this.setTarget({x: x, y: y});
+        }
+    }
+
+    setTarget(t: Phaser.Types.Math.Vector2Like) {
+        target = new Phaser.Math.Vector2(t.x, t.y);
         targetSprite.setPosition(target.x, target.y);
+    }
+
+    updatePathTarget() {
+        // Don't need to update the target if we're at the end of the current path
+        if (!shipPath || currentPathIndex >= shipPath.length - 1) {
+            return;
+        }
+
+        // If ship has reached a node, aim for the next one
+        let dist = ship.body.center.distance(new Phaser.Math.Vector2(shipPath[currentPathIndex]));
+        if (dist <= pathDistanceCheck) {
+            currentPathIndex++;
+            this.setTarget(shipPath[currentPathIndex]);
+        }
     }
 
     create() {
         this.cameras.main.setBackgroundColor(backgroundColor);
 
-        // Walls
-        let floor = this.add.tileSprite(304, 592, 608, 32, "block");
-        let ceiling = this.add.tileSprite(304, 16, 608, 32, "block");
-        let left = this.add.tileSprite(16, 304, 32, 544, "block");
-        let right = this.add.tileSprite(592, 304, 32, 544, "block");
-        let walls = this.physics.add.staticGroup([floor, ceiling, left, right]);
-
         // Room tiles
         const roomMap = this.make.tilemap({ key: "room1" });
         const tileset = roomMap.addTilesetImage("OneBlock", "block");
-        let blockLayer = roomMap.createLayer(0, tileset, 32, 32);
+        let blockLayer = roomMap.createLayer(0, tileset);//, 32, 32);
+        let navMeshLayer = roomMap.getObjectLayer("navmesh");
         blockLayer.setCollisionByProperty({ collides: true });
 
         // Ship
         ship = this.addPhysicsImage(200, 200, "ship");
+        ship.setScale(0.5);
         ship.body.setMaxSpeed(shipMaxSpeed);
 
-        this.physics.add.collider(walls, ship);
+        //this.physics.add.collider(walls, ship);
         this.physics.add.collider(blockLayer, ship);
 
+        //navMesh = this.navMeshPlugin.buildMeshFromTilemap("mesh", roomMap, [blockLayer]);
+        navMesh = this.navMeshPlugin.buildMeshFromTiled("mesh", navMeshLayer, 4);
+        // Visualize the underlying navmesh
+        //navMesh.enableDebug(); 
+        /*navMesh.debugDrawMesh({
+          drawCentroid: true,
+          drawBounds: true,
+          drawNeighbors: true,
+          drawPortals: false
+        });*/
+
         targetSprite = this.add.image(-1000, -1000, "target");
-        this.setTarget(400, 400);
+        this.setPathTarget(300, 300);
 
         this.input.on('pointerdown', (pointer) => {
-            this.setTarget(pointer.x, pointer.y);
+            this.setPathTarget(pointer.x, pointer.y);
         });
     }
 
@@ -74,5 +112,8 @@ export class MainScene extends Phaser.Scene {
 
         // Accelerate towards the target
         ship.setAcceleration(homingDir.x * shipAcceleration, homingDir.y * shipAcceleration);
+
+        // Update path
+        this.updatePathTarget();
     }
 }
