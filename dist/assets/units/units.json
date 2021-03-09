@@ -1,0 +1,14 @@
+{
+    "ship": {
+        "name": "ship",
+        "maxSpeed": 300,
+        "maxAcceleration": 1000,
+        "maxAngularSpeed": 0.1,
+        "health": 10,
+        "weapon": "machineGun",
+        "bodyType": "circle",
+        "bodySize": 10,
+        "bodyOffset": 6,
+        "rotation": true
+    }
+}
