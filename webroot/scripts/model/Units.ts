@@ -1,5 +1,6 @@
 let unitCache;
 
+/** A Unit in the active room */
 export type Unit = {
     name: string;
     maxAcceleration: number;
@@ -12,11 +13,12 @@ export type Unit = {
     currentPathIndex: number;
 }
 
+/** Store unit json data for creating units */
 export function loadUnitJson(unitJson) {
     unitCache = unitJson;
 }
 
-// Create a Phaser ImageWithDynamicBody for the unit defined with the given name in units.json
+/** Create a Phaser ImageWithDynamicBody for the unit defined with the given name in units.json */
 export function createUnit(name: string, scene: Phaser.Scene) : Unit {
     let unitJson = unitCache[name];
     if (!unitJson) {

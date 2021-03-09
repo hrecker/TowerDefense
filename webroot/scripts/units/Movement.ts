@@ -1,9 +1,9 @@
 import { Unit } from "../model/Units";
 
-// How close a unit needs to be before it has officially "made it" to a node on a path
+/** How close a unit needs to be before it has officially "made it" to a node on a path */
 const pathDistanceCheck = 16;
 
-// Move a homing unit for one frame (call each frame in the update method of a scene)
+/** Move a homing unit for one frame (call each frame in the update method of a scene) */
 export function moveHomingUnit(unit: Unit) {
     if (!unit.path || unit.path.length == 0 || unit.currentPathIndex < 0 || unit.currentPathIndex >= unit.path.length) {
         return;
@@ -27,7 +27,7 @@ export function moveHomingUnit(unit: Unit) {
     updatePathTarget(unit);
 }
 
-// Generate a path for the unit to follow to the target using the room's navmesh
+/** Generate a path for the unit to follow to the target using the room's navmesh */
 export function updateUnitTarget(unit: Unit, navMesh, target: Phaser.Types.Math.Vector2Like) {
     let path = navMesh.findPath(
         { x: unit.gameObj.body.center.x, y: unit.gameObj.body.center.y }, 
@@ -46,7 +46,7 @@ export function updateUnitTarget(unit: Unit, navMesh, target: Phaser.Types.Math.
     unit.currentPathIndex = index;
 }
 
-// If a unit has reached the current target of its path, then move to the next one
+/** If a unit has reached the current target of its path, then move to the next one */
 function updatePathTarget(unit: Unit) {
     // Don't need to update the target if we're at the end of the current path
     if (!unit.path || unit.currentPathIndex >= unit.path.length - 1 || unit.currentPathIndex < 0) {
@@ -60,11 +60,13 @@ function updatePathTarget(unit: Unit) {
     }
 }
 
-// Note: this assumes the target is stationary
-// See https://gamedev.stackexchange.com/questions/52988/implementing-a-homing-missile
-// and https://gamedev.stackexchange.com/questions/17313/how-does-one-prevent-homing-missiles-from-orbiting-their-targets
-// Based on a (possibly moving) body, a stationary target, and the max acceleration of the body, 
-// calculate the direction the body should accelerate to hit the target.
+/**
+ * Note: this assumes the target is stationary
+ * See https://gamedev.stackexchange.com/questions/52988/implementing-a-homing-missile
+ * and https://gamedev.stackexchange.com/questions/17313/how-does-one-prevent-homing-missiles-from-orbiting-their-targets
+ * Based on a (possibly moving) body, a stationary target, and the max acceleration of the body, 
+ * calculate the direction the body should accelerate to hit the target.
+ */
 export function homingDirection(body : Phaser.Physics.Arcade.Body, target: Phaser.Math.Vector2, maxAcc: number): Phaser.Math.Vector2 {
     let dirToImpact = target.clone().subtract(body.center);
     let dirtoImpactNorm = dirToImpact.clone().normalize();
