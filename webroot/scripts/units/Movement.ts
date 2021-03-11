@@ -1,10 +1,19 @@
 import { Unit } from "../model/Units";
 
+/** Move a unit for one frame (call each frame in the update method of a scene) */
+export function moveUnit(unit: Unit) {
+    switch (unit.movement) {
+        case "homing":
+            moveHomingUnit(unit);
+            break;
+    }
+}
+
 /** How close a unit needs to be before it has officially "made it" to a node on a path */
 const pathDistanceCheck = 16;
 
-/** Move a homing unit for one frame (call each frame in the update method of a scene) */
-export function moveHomingUnit(unit: Unit) {
+/** Move a homing unit for one frame */
+function moveHomingUnit(unit: Unit) {
     if (!unit.path || unit.path.length == 0 || unit.currentPathIndex < 0 || unit.currentPathIndex >= unit.path.length) {
         return;
     }
@@ -71,6 +80,7 @@ export function homingDirection(body : Phaser.Physics.Arcade.Body, target: Phase
     let dirToImpact = target.clone().subtract(body.center);
     let dirtoImpactNorm = dirToImpact.clone().normalize();
     if (body.velocity.equals(Phaser.Math.Vector2.ZERO)) {
+        //TODO maybe this is causing the occasional weird ship movement?
         return dirtoImpactNorm;
     }
     // Get relative velocity of target from body's frame of reference

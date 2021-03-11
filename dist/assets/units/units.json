@@ -1,14 +1,27 @@
 {
     "ship": {
         "name": "ship",
+        "movement": "homing",
         "maxSpeed": 300,
         "maxAcceleration": 1000,
         "maxAngularSpeed": 0.1,
-        "health": 10,
+        "health": 1,
         "weapon": "machineGun",
+        "weaponDelay": 1000,
         "bodyType": "circle",
         "bodySize": 10,
         "bodyOffset": 6,
-        "rotation": true
+        "rotation": true,
+        "playerOwned": false
+    },
+    "turret": {
+        "name": "turret",
+        "health": 3,
+        "weapon": "peaShooter",
+        "bodyType": "circle",
+        "bodySize": 14,
+        "bodyOffset": 2,
+        "weaponDelay": 500,
+        "playerOwned": true
     }
 }
