@@ -5,7 +5,7 @@
         "maxSpeed": 300,
         "maxAcceleration": 1000,
         "maxAngularSpeed": 0.1,
-        "health": 1,
+        "health": 10,
         "weapon": "machineGun",
         "weaponDelay": 1000,
         "bodyType": "circle",

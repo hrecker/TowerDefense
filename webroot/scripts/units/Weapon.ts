@@ -1,4 +1,4 @@
-import { Unit, handleHit } from "../model/Units";
+import { Unit, handleProjectileHit } from "../model/Units";
 
 //TODO make this modifiable in some way?
 const bulletSpeed = 100;
@@ -32,7 +32,7 @@ function firePlayerBullet(unit: Unit, target: Unit, scene: Phaser.Scene) {
     // Destroy on touching geometry
     scene.physics.add.collider(bullet, scene.getRoomBlocks(), () => bullet.destroy());
     // Handle hit on target
-    scene.physics.add.overlap(bullet, target.gameObj, handleHit, null, scene);
+    scene.physics.add.overlap(bullet, target.gameObj, handleProjectileHit, null, scene);
     // Destroy bullet after enough time passes for it to go off screen
     scene.time.delayedCall(bulletLifetimeMs, () => bullet.destroy());
 }

@@ -1,7 +1,7 @@
 import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
-import { Unit, loadUnitJson, createUnit } from "../model/Units";
+import { Unit, loadUnitJson, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
 
 let ship: Unit;
 let roomBlocks: Phaser.Tilemaps.TilemapLayer;
@@ -49,8 +49,10 @@ export class MainScene extends Phaser.Scene {
         let turret2 = createUnit("turret", {x: 300, y: 500}, this);
         sceneUnits[turret1.id] = turret1;
         sceneUnits[turret2.id] = turret2;
+        let playerUnits = this.physics.add.group([turret1.gameObj, turret2.gameObj]);
 
         this.physics.add.collider(roomBlocks, ship.gameObj);
+        this.physics.add.overlap(ship.gameObj, playerUnits, handleUnitHit, null, this);
 
         navMesh = this["navMeshPlugin"].buildMeshFromTiled("mesh", navMeshLayer, 8);
         // Visualize the underlying navmesh
@@ -99,5 +101,6 @@ export class MainScene extends Phaser.Scene {
             //TODO targeting for the ship
             weapon.updateUnitWeapon(sceneUnits[id], targetUnit, delta, this);
         });
+        updateFrameOverlaps();
     }
 }
