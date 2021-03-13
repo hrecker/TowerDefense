@@ -6,6 +6,7 @@ export type Unit = {
     name: string;
     id: number;
     movement: string;
+    maxSpeed: number;
     maxAcceleration: number;
     maxAngularSpeed: number;
     rotation: boolean;
@@ -41,12 +42,12 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
     } else { // Default to square
         unitImage.setBodySize(unitJson["bodySize"], unitJson["bodySize"]);
     }
-    unitImage.body.setMaxSpeed(unitJson["maxSpeed"]);
 
     return {
         name: name,
         id: unitId,
         movement: unitJson["movement"],
+        maxSpeed: unitJson["maxSpeed"],
         maxAcceleration: unitJson["maxAcceleration"],
         maxAngularSpeed: unitJson["maxAngularSpeed"],
         rotation: unitJson["rotation"],

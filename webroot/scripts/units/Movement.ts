@@ -7,6 +7,8 @@ export function moveUnit(unit: Unit) {
             moveHomingUnit(unit);
             break;
     }
+
+    clampUnitSpeed(unit);
 }
 
 /** How close a unit needs to be before it has officially "made it" to a node on a path */
@@ -34,6 +36,13 @@ function moveHomingUnit(unit: Unit) {
 
     // Update current target along path if appropriate
     updatePathTarget(unit);
+}
+
+function clampUnitSpeed(unit: Unit) {
+    if (unit.gameObj.body.velocity.length() > unit.maxSpeed) {
+        let newVel = unit.gameObj.body.velocity.normalize().scale(unit.maxSpeed);
+        unit.gameObj.setVelocity(newVel.x, newVel.y);
+    }
 }
 
 /** Generate a path for the unit to follow to the target using the room's navmesh */
@@ -80,7 +89,6 @@ export function homingDirection(body : Phaser.Physics.Arcade.Body, target: Phase
     let dirToImpact = target.clone().subtract(body.center);
     let dirtoImpactNorm = dirToImpact.clone().normalize();
     if (body.velocity.equals(Phaser.Math.Vector2.ZERO)) {
-        //TODO maybe this is causing the occasional weird ship movement?
         return dirtoImpactNorm;
     }
     // Get relative velocity of target from body's frame of reference
