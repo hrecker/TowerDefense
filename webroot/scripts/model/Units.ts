@@ -6,6 +6,11 @@ let unitId = 0;
 let activeOverlaps: { [id: string]: boolean } = {};
 let currentFrameOverlaps: { [id: string]: boolean } = {};
 
+const healthBarWidth = 64;
+const healthBarHeight = 6;
+export const healthBarYPos = 24;
+const healthBarFillColor = 0x32a852;
+
 /** A Unit in the active room */
 export type Unit = {
     name: string;
@@ -16,10 +21,13 @@ export type Unit = {
     maxAngularSpeed: number;
     rotation: boolean;
     health: number;
+    maxHealth: number;
     weapon: string;
     weaponDelay: number;
     currentWeaponDelay: number;
     gameObj: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+    healthBarBackground: Phaser.GameObjects.Rectangle;
+    healthBar: Phaser.GameObjects.Rectangle;
     path: Phaser.Types.Math.Vector2Like[];
     currentPathIndex: number;
     playerOwned: boolean;
@@ -48,6 +56,12 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
         unitImage.setBodySize(unitJson["bodySize"], unitJson["bodySize"]);
     }
 
+    // Create the Unit's health bar
+    let healthBarBackground = scene.add.rectangle(location.x, location.y - healthBarYPos,
+        healthBarWidth + 2, healthBarHeight + 2, 0, 0.5);
+    let healthBar = scene.add.rectangle(location.x, location.y - healthBarYPos,
+        healthBarWidth, healthBarHeight, healthBarFillColor, 0.5);
+
     return {
         name: name,
         id: unitId,
@@ -57,14 +71,23 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
         maxAngularSpeed: unitJson["maxAngularSpeed"],
         rotation: unitJson["rotation"],
         health: unitJson["health"],
+        maxHealth: unitJson["health"],
         weapon: unitJson["weapon"],
         weaponDelay: unitJson["weaponDelay"],
         currentWeaponDelay: 0,
         gameObj: unitImage,
+        healthBarBackground: healthBarBackground,
+        healthBar: healthBar,
         path: null,
         currentPathIndex: -1,
         playerOwned: unitJson["playerOwned"]
     };
+}
+
+function destroyUnit(unit: Unit) {
+    unit.gameObj.destroy();
+    unit.healthBarBackground.destroy();
+    unit.healthBar.destroy();
 }
 
 /** Should be used as an overlap callback, to handle when a projectile hits a unit */
@@ -123,7 +146,11 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
 export function takeDamage(unit: Unit, damage: number) {
     unit.health -= damage;
     if (unit.health <= 0) {
-        unit.gameObj.destroy();
+        destroyUnit(unit);
+    } else {
+        let healthFraction = unit.health / unit.maxHealth;
+        let barWidth = healthBarWidth * healthFraction;
+        unit.healthBar.setSize(barWidth, healthBarHeight);
     }
 }
 

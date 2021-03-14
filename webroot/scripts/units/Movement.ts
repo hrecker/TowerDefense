@@ -1,4 +1,4 @@
-import { Unit } from "../model/Units";
+import { Unit, healthBarYPos } from "../model/Units";
 
 /** Move a unit for one frame (call each frame in the update method of a scene) */
 export function moveUnit(unit: Unit) {
@@ -9,6 +9,7 @@ export function moveUnit(unit: Unit) {
     }
 
     clampUnitSpeed(unit);
+    trackUnitHealthBar(unit);
 }
 
 /** How close a unit needs to be before it has officially "made it" to a node on a path */
@@ -43,6 +44,11 @@ function clampUnitSpeed(unit: Unit) {
         let newVel = unit.gameObj.body.velocity.normalize().scale(unit.maxSpeed);
         unit.gameObj.setVelocity(newVel.x, newVel.y);
     }
+}
+
+function trackUnitHealthBar(unit: Unit) {
+    unit.healthBar.setPosition(unit.gameObj.body.center.x, unit.gameObj.body.center.y - healthBarYPos);
+    unit.healthBarBackground.setPosition(unit.gameObj.body.center.x, unit.gameObj.body.center.y - healthBarYPos);
 }
 
 /** Generate a path for the unit to follow to the target using the room's navmesh */
