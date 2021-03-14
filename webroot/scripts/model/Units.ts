@@ -1,3 +1,6 @@
+import { MainScene } from "../scenes/MainScene";
+import { projectileNames } from "../units/Weapon";
+
 let unitCache;
 let unitId = 0;
 let activeOverlaps: { [id: string]: boolean } = {};
@@ -28,7 +31,7 @@ export function loadUnitJson(unitJson) {
 }
 
 /** Create a Phaser ImageWithDynamicBody for the unit defined with the given name in units.json */
-export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like, scene: Phaser.Scene) : Unit {
+export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like, scene: MainScene) : Unit {
     let unitJson = unitCache[name];
     if (!unitJson) {
         return null;
@@ -66,11 +69,10 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
 
 /** Should be used as an overlap callback, to handle when a projectile hits a unit */
 export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamicBody, obj2: Phaser.Types.Physics.Arcade.ImageWithDynamicBody) {
-    //TODO handle different projectile types
     let bullet: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-    if (obj1.name == "playerBullet") {
+    if (projectileNames.includes(obj1.name)) {
         bullet = obj1;
-    } else if (obj2.name == "playerBullet") {
+    } else if (projectileNames.includes(obj2.name)) {
         bullet = obj2;
     }
     if (bullet) {

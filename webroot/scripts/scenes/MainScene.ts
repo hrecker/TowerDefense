@@ -4,11 +4,14 @@ import * as weapon from "../units/Weapon";
 import { Unit, loadUnitJson, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
 
 let ship: Unit;
+let target: Unit;
 let roomBlocks: Phaser.Tilemaps.TilemapLayer;
-let targetSprite: Phaser.GameObjects.Image;
+let crosshairSprite: Phaser.GameObjects.Image;
 // Nav mesh for units to get around the current room
 let navMesh;
 let sceneUnits: { [id: number]: Unit } = {};
+let playerUnits: Phaser.Physics.Arcade.Group;
+let shipUnits: Phaser.Physics.Arcade.Group;
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -22,7 +25,9 @@ export class MainScene extends Phaser.Scene {
         this.load.image("turret", "assets/sprites/turret.png");
 
         this.load.image("playerBullet", "assets/sprites/playerBullet.png");
+        this.load.image("shipBullet", "assets/sprites/shipBullet.png");
 
+        this.load.image("crosshair", "assets/sprites/crosshair.png");
         this.load.image("target", "assets/sprites/target.png");
         this.load.image("block", "assets/sprites/block.png");
 
@@ -45,14 +50,18 @@ export class MainScene extends Phaser.Scene {
         sceneUnits = [];
         ship = createUnit("ship", {x: 200, y: 200}, this);
         sceneUnits[ship.id] = ship;
+        target = createUnit("target", {x: 400, y: 250}, this);
+        sceneUnits[target.id] = target;
         let turret1 = createUnit("turret", {x: 300, y: 300}, this);
         let turret2 = createUnit("turret", {x: 300, y: 500}, this);
         sceneUnits[turret1.id] = turret1;
         sceneUnits[turret2.id] = turret2;
-        let playerUnits = this.physics.add.group([turret1.gameObj, turret2.gameObj]);
 
-        this.physics.add.collider(roomBlocks, ship.gameObj);
-        this.physics.add.overlap(ship.gameObj, playerUnits, handleUnitHit, null, this);
+        playerUnits = this.physics.add.group([turret1.gameObj, turret2.gameObj, target.gameObj]);
+        shipUnits = this.physics.add.group(ship.gameObj);
+
+        this.physics.add.collider(roomBlocks, shipUnits);
+        this.physics.add.overlap(shipUnits, playerUnits, handleUnitHit, null, this);
 
         navMesh = this["navMeshPlugin"].buildMeshFromTiled("mesh", navMeshLayer, 8);
         // Visualize the underlying navmesh
@@ -64,16 +73,26 @@ export class MainScene extends Phaser.Scene {
           drawPortals: false
         });*/
 
-        targetSprite = this.add.image(-1000, -1000, "target");
+        move.updateUnitTarget(ship, navMesh, target.gameObj.body.center);
+
+        crosshairSprite = this.add.image(-1000, -1000, "crosshair");
 
         this.input.on('pointerdown', (pointer) => {
             if (ship.gameObj.body) {
                 move.updateUnitTarget(ship, navMesh, pointer);
-                targetSprite.setPosition(pointer.x, pointer.y);
+                crosshairSprite.setPosition(pointer.x, pointer.y);
             } else {
-                targetSprite.setVisible(false);
+                crosshairSprite.setVisible(false);
             }
         });
+    }
+
+    getShipUnits() {
+        return shipUnits;
+    }
+
+    getPlayerUnits() {
+        return playerUnits;
     }
 
     getRoomBlocks() {
@@ -88,17 +107,24 @@ export class MainScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        // Remove units from sceneUnits when they are destroyed
         Object.keys(sceneUnits).forEach(id => {
-            if (sceneUnits[id].gameObj.body) {
-                move.moveUnit(sceneUnits[id]);
+            if (!sceneUnits[id].gameObj.body) {
+                console.log("Deleting unit " + sceneUnits[id].name);
+                delete sceneUnits[id];
             }
+        });
+
+        Object.keys(sceneUnits).forEach(id => {
+            move.moveUnit(sceneUnits[id]);
         });
         Object.keys(sceneUnits).forEach(id => {
             let targetUnit;
             if (sceneUnits[id].playerOwned) {
                 targetUnit = ship;
+            } else {
+                targetUnit = target;
             }
-            //TODO targeting for the ship
             weapon.updateUnitWeapon(sceneUnits[id], targetUnit, delta, this);
         });
         updateFrameOverlaps();

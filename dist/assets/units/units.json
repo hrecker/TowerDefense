@@ -6,13 +6,19 @@
         "maxAcceleration": 1000,
         "maxAngularSpeed": 0.1,
         "health": 10,
-        "weapon": "machineGun",
-        "weaponDelay": 1000,
+        "weapon": "peaShooter",
+        "weaponDelay": 300,
         "bodyType": "circle",
         "bodySize": 10,
         "bodyOffset": 6,
         "rotation": true,
         "playerOwned": false
+    },
+    "target": {
+        "name": "target",
+        "health": 10,
+        "bodySize": 24,
+        "playerOwned": true
     },
     "turret": {
         "name": "turret",
