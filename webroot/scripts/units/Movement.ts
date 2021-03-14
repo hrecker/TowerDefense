@@ -1,10 +1,11 @@
 import { Unit, healthBarYPos } from "../model/Units";
 
 /** Move a unit for one frame (call each frame in the update method of a scene) */
-export function moveUnit(unit: Unit) {
+export function moveUnit(unit: Unit, roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
     switch (unit.movement) {
-        case "homing":
-            moveHomingUnit(unit);
+        //TODO units that don't stop at line of sight (second param here)
+        case "homingLOS":
+            moveHomingUnit(unit, true, roomMap, debugGraphics);
             break;
     }
 
@@ -15,14 +16,78 @@ export function moveUnit(unit: Unit) {
 /** How close a unit needs to be before it has officially "made it" to a node on a path */
 const pathDistanceCheck = 16;
 
+//TODO make variable depending on unit/weapon
+const lineOfSightWidth = 20;
+
+/** Check if the origin can see the target in the current room. Return true if line of sight is free. */
+export function checkLineOfSight(origin: Phaser.Types.Math.Vector2Like, target: Phaser.Types.Math.Vector2Like,
+    roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
+    // Create 3 lines from near center of origin to near center of target, to ensure space for firing weapons
+    let targetVector = new Phaser.Math.Vector2(target).subtract(new Phaser.Math.Vector2(origin));
+    let left = targetVector.clone().normalizeLeftHand().setLength(lineOfSightWidth / 2);
+    let right = targetVector.normalizeRightHand().setLength(lineOfSightWidth / 2);
+
+    let leftOrigin = new Phaser.Math.Vector2(origin).add(left);
+    let rightOrigin = new Phaser.Math.Vector2(origin).add(right);
+    let leftTarget = new Phaser.Math.Vector2(target).add(left);
+    let rightTarget = new Phaser.Math.Vector2(target).add(right);
+
+    let line1 = new Phaser.Geom.Line(origin.x, origin.y, target.x, target.y);
+    let line2 = new Phaser.Geom.Line(leftOrigin.x, leftOrigin.y, leftTarget.x, leftTarget.y);
+    let line3 = new Phaser.Geom.Line(rightOrigin.x, rightOrigin.y, rightTarget.x, rightTarget.y);
+
+    // Debugging for line of sight
+    if (debugGraphics) {
+        debugGraphics.clear();
+        debugGraphics.strokeLineShape(line1);
+        debugGraphics.strokeLineShape(line2);
+        debugGraphics.strokeLineShape(line3);
+    }
+
+    let originTile = roomMap.layer.tilemapLayer.worldToTileXY(origin.x, origin.y, true);
+    let targetTile = roomMap.layer.tilemapLayer.worldToTileXY(target.x, target.y, true);
+    let pointStart = new Phaser.Math.Vector2(Math.min(originTile.x, targetTile.x), Math.min(originTile.y, targetTile.y));
+    let pointEnd = new Phaser.Math.Vector2(Math.max(originTile.x, targetTile.x), Math.max(originTile.y, targetTile.y));
+
+    // Tiles within bounding rectangle of origin and target tiles, to narrow down which ones to check
+    var width = pointEnd.x - pointStart.x + 1;
+    var height = pointEnd.y - pointStart.y + 1;
+    let possibleIntersects = roomMap.getTilesWithin(pointStart.x, pointStart.y, width, height, { isColliding: true });
+
+    for (let tile of possibleIntersects) {
+        let tileRect = new Phaser.Geom.Rectangle(0, 0, roomMap.layer.tileWidth, roomMap.layer.tileHeight);
+        let worldPoint = roomMap.layer.tilemapLayer.tileToWorldXY(tile.x, tile.y);
+        tileRect.x = worldPoint.x;
+        tileRect.y = worldPoint.y;
+        for (let line of [line1, line2, line3]) {
+            // Any intersection means no line of sight
+            if (Phaser.Geom.Intersects.LineToRectangle(line, tileRect)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 /** Move a homing unit for one frame */
-function moveHomingUnit(unit: Unit) {
+function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
     if (!unit.path || unit.path.length == 0 || unit.currentPathIndex < 0 || unit.currentPathIndex >= unit.path.length) {
         return;
     }
 
+    let currentPathIndex = unit.currentPathIndex;
+    // If the unit only needs line of sight and it has it, don't need to move any more
+    if (onlyNeedLOS && checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1], roomMap, debugGraphics)) {
+        unit.gameObj.setAcceleration(0);
+        // Once the target is visible, allow drag to slow the unit down more naturally
+        unit.gameObj.setDrag(500);
+        return;
+    } else {
+        unit.gameObj.setDrag(0);
+    }
+
     // Get direction unit should move to hit target
-    let target = new Phaser.Math.Vector2(unit.path[unit.currentPathIndex]);
+    let target = new Phaser.Math.Vector2(unit.path[currentPathIndex]);
     let homingDir = homingDirection(unit.gameObj.body, target, unit.maxAcceleration);
     let targetAngle = homingDir.clone().add(unit.gameObj.body.center);
 
@@ -63,7 +128,7 @@ export function updateUnitTarget(unit: Unit, navMesh, target: Phaser.Types.Math.
         console.log("Couldn't find a path for " + unit.name + "!");
         // Just try to go straight towards it (probably won't work though)
         // Likely to occur if the target point is right next to an obstacle in the room (and thus outside the navmesh)
-        path = [target];
+        path = [new Phaser.Math.Vector2(target)];
     }
 
     unit.path = path;

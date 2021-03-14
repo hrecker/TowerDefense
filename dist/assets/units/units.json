@@ -1,7 +1,7 @@
 {
     "ship": {
         "name": "ship",
-        "movement": "homing",
+        "movement": "homingLOS",
         "maxSpeed": 300,
         "maxAcceleration": 1000,
         "maxAngularSpeed": 0.1,
