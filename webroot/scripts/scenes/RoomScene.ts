@@ -1,7 +1,7 @@
 import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
-import { Unit, loadUnitJson, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
+import { Unit, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
 
 let ship: Unit;
 let roomTarget: Unit; // Target the ship is trying to destroy
@@ -15,31 +15,16 @@ let sceneUnits: { [id: number]: Unit } = {};
 let playerUnits: Phaser.Physics.Arcade.Group;
 let shipUnits: Phaser.Physics.Arcade.Group;
 
-export class MainScene extends Phaser.Scene {
+export class RoomScene extends Phaser.Scene {
     constructor() {
         super({
-            key: "MainScene"
+            key: "RoomScene"
         });
     }
 
-    preload() {
-        this.load.image("ship", "assets/sprites/ship.png");
-        this.load.image("turret", "assets/sprites/turret.png");
-
-        this.load.image("playerBullet", "assets/sprites/playerBullet.png");
-        this.load.image("shipBullet", "assets/sprites/shipBullet.png");
-
-        this.load.image("crosshair", "assets/sprites/crosshair.png");
-        this.load.image("target", "assets/sprites/target.png");
-        this.load.image("block", "assets/sprites/block.png");
-
-        this.load.tilemapTiledJSON("room1", "assets/rooms/room1.json");
-        this.load.json("units", "assets/units/units.json");
-    }
-
     create() {
+        console.log("RoomScene starting");
         this.cameras.main.setBackgroundColor(backgroundColor);
-        loadUnitJson(this.cache.json.get("units"));
         //graphics = this.add.graphics();
 
         // Room tiles

@@ -1,4 +1,4 @@
-import { MainScene } from "../scenes/MainScene";
+import { RoomScene } from "../scenes/RoomScene";
 import { projectileNames } from "../units/Weapon";
 
 let unitCache;
@@ -31,6 +31,7 @@ export type Unit = {
     path: Phaser.Types.Math.Vector2Like[];
     currentPathIndex: number;
     playerOwned: boolean;
+    purchasable: boolean;
 }
 
 /** Store unit json data for creating units */
@@ -38,12 +39,55 @@ export function loadUnitJson(unitJson) {
     unitCache = unitJson;
 }
 
-/** Create a Phaser ImageWithDynamicBody for the unit defined with the given name in units.json */
-export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like, scene: MainScene) : Unit {
+export function getUnitsJsonProperties(filter): Unit[] {
+    let units = [];
+    for (let name in unitCache) {
+        let unit = getUnitJsonProperties(name);
+        if (filter(unit)) {
+            units.push(unit);
+        }
+    }
+    return units;
+}
+
+/** Get a unit with property values defined in json, but don't actually create it in the scene. */
+export function getUnitJsonProperties(name: string) : Unit {
     let unitJson = unitCache[name];
     if (!unitJson) {
         return null;
     }
+
+    //TODO cache this stuff rather than making a new Unit each time?
+    return {
+        name: name,
+        id: -1,
+        movement: unitJson["movement"],
+        maxSpeed: unitJson["maxSpeed"],
+        maxAcceleration: unitJson["maxAcceleration"],
+        maxAngularSpeed: unitJson["maxAngularSpeed"],
+        rotation: unitJson["rotation"],
+        health: unitJson["health"],
+        maxHealth: unitJson["health"],
+        weapon: unitJson["weapon"],
+        weaponDelay: unitJson["weaponDelay"],
+        currentWeaponDelay: 0,
+        gameObj: null,
+        healthBarBackground: null,
+        healthBar: null,
+        path: null,
+        currentPathIndex: -1,
+        playerOwned: unitJson["playerOwned"],
+        purchasable: unitJson["purchasable"]
+    };
+}
+
+/** Create a Phaser ImageWithDynamicBody for the unit defined with the given name in units.json */
+export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like, scene: RoomScene) : Unit {
+    let unitJson = unitCache[name];
+    if (!unitJson) {
+        return null;
+    }
+    let unit = getUnitJsonProperties(name);
 
     // Create the actual Phaser ImageWithDynamicBody
     let unitImage = scene.physics.add.image(location.x, location.y, name);
@@ -57,31 +101,14 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
     }
 
     // Create the Unit's health bar
-    let healthBarBackground = scene.add.rectangle(location.x, location.y - healthBarYPos,
+    unit.healthBarBackground = scene.add.rectangle(location.x, location.y - healthBarYPos,
         healthBarWidth + 2, healthBarHeight + 2, 0, 0.5);
-    let healthBar = scene.add.rectangle(location.x, location.y - healthBarYPos,
+    unit.healthBar = scene.add.rectangle(location.x, location.y - healthBarYPos,
         healthBarWidth, healthBarHeight, healthBarFillColor, 0.5);
 
-    return {
-        name: name,
-        id: unitId,
-        movement: unitJson["movement"],
-        maxSpeed: unitJson["maxSpeed"],
-        maxAcceleration: unitJson["maxAcceleration"],
-        maxAngularSpeed: unitJson["maxAngularSpeed"],
-        rotation: unitJson["rotation"],
-        health: unitJson["health"],
-        maxHealth: unitJson["health"],
-        weapon: unitJson["weapon"],
-        weaponDelay: unitJson["weaponDelay"],
-        currentWeaponDelay: 0,
-        gameObj: unitImage,
-        healthBarBackground: healthBarBackground,
-        healthBar: healthBar,
-        path: null,
-        currentPathIndex: -1,
-        playerOwned: unitJson["playerOwned"]
-    };
+    unit.id = unitId;
+    unit.gameObj = unitImage;
+    return unit;
 }
 
 function destroyUnit(unit: Unit) {

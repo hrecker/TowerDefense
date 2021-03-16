@@ -12,13 +12,15 @@
         "bodySize": 10,
         "bodyOffset": 6,
         "rotation": true,
-        "playerOwned": false
+        "playerOwned": false,
+        "purchasable": false
     },
     "target": {
         "name": "target",
         "health": 10,
         "bodySize": 24,
-        "playerOwned": true
+        "playerOwned": true,
+        "purchasable": false
     },
     "turret": {
         "name": "turret",
@@ -28,6 +30,27 @@
         "bodySize": 14,
         "bodyOffset": 2,
         "weaponDelay": 500,
-        "playerOwned": true
+        "playerOwned": true,
+        "purchasable": true
+    },
+    "chaser": {
+        "name": "chaser",
+        "health": 5,
+        "bodyType": "circle",
+        "bodySize": 12,
+        "bodyOffset": 2,
+        "playerOwned": true,
+        "purchasable": true
+    },
+    "crawler": {
+        "name": "crawler",
+        "health": 2,
+        "weapon": "peaShooter",
+        "bodyType": "circle",
+        "bodySize": 14,
+        "bodyOffset": 2,
+        "weaponDelay": 1000,
+        "playerOwned": true,
+        "purchasable": true
     }
 }

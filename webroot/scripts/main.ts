@@ -1,7 +1,9 @@
 import 'phaser';
 import PhaserNavMeshPlugin from "phaser-navmesh";
 
-import { MainScene } from "./scenes/MainScene";
+import { LoadingScene } from "./scenes/LoadingScene";
+import { RoomScene } from "./scenes/RoomScene";
+import { RoomUIScene } from "./scenes/RoomUIScene";
 
 var config: Phaser.Types.Core.GameConfig = {
     width: 800,
@@ -23,7 +25,9 @@ var config: Phaser.Types.Core.GameConfig = {
         ]
     },
     scene: [
-        MainScene
+        LoadingScene,
+        RoomScene,
+        RoomUIScene
     ]
 };
 

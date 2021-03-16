@@ -1,5 +1,5 @@
 import { Unit, handleProjectileHit } from "../model/Units";
-import { MainScene } from "../scenes/MainScene";
+import { RoomScene } from "../scenes/RoomScene";
 
 export const projectileNames = ["playerBullet", "shipBullet"];
 //TODO make this modifiable in some way?
@@ -7,7 +7,7 @@ const bulletSpeed = 100;
 const bulletLifetimeMs = 10000;
 
 /** Update weapon control for a unit for one frame (call each frame in the update method of a scene) */
-export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta: number, scene: MainScene) {
+export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta: number, scene: RoomScene) {
     if (unit.currentWeaponDelay > 0) {
         unit.currentWeaponDelay -= delta;
     } else if (target) {
@@ -25,7 +25,7 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
     }
 }
 
-function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector2, scene: MainScene) {
+function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
     //TODO arcade physics group for bullets rather than destroying them and creating new ones?
     let bullet = scene.physics.add.image(unit.gameObj.body.center.x, unit.gameObj.body.center.y, bulletName);
     bullet.setName(bulletName);
@@ -38,13 +38,13 @@ function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector
     return bullet;
 }
 
-function firePlayerBullet(unit: Unit, target: Phaser.Math.Vector2, scene: MainScene) {
+function firePlayerBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
     let bullet = createBullet("playerBullet", unit, target, scene);
     // Handle hit on target
     scene.physics.add.overlap(bullet, scene.getShipUnits(), handleProjectileHit, null, scene);
 }
 
-function fireShipBullet(unit: Unit, target: Phaser.Math.Vector2, scene: MainScene) {
+function fireShipBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
     let bullet = createBullet("shipBullet", unit, target, scene);
     // Handle hit on target
     scene.physics.add.overlap(bullet, scene.getPlayerUnits(), handleProjectileHit, null, scene);
