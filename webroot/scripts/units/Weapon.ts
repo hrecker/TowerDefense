@@ -20,6 +20,17 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
                     fireShipBullet(unit, target, scene);
                 }
                 break;
+            case "straightShooter":
+                if (unit.playerOwned) {
+                    firePlayerBullet(unit,
+                        unit.gameObj.body.center.clone().add(
+                            Phaser.Math.Vector2.RIGHT.clone().rotate(unit.gameObj.rotation)), scene);
+                } else {
+                    fireShipBullet(unit,
+                        unit.gameObj.body.center.clone().add(
+                            Phaser.Math.Vector2.RIGHT.clone().rotate(unit.gameObj.rotation)), scene);
+                }
+                break;
         }
         unit.currentWeaponDelay = unit.weaponDelay;
     }

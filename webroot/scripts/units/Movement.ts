@@ -1,11 +1,34 @@
 import { Unit, healthBarYPos } from "../model/Units";
 
+let activeNavmesh;
+
+export function setRoomNavmesh(navmesh) {
+    activeNavmesh = navmesh;
+}
+
 /** Move a unit for one frame (call each frame in the update method of a scene) */
-export function moveUnit(unit: Unit, roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
+export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phaser.Tilemaps.Tilemap, delta: number, debugGraphics: Phaser.GameObjects.Graphics) {
     switch (unit.movement) {
-        //TODO units that don't stop at line of sight (second param here)
         case "homingLOS":
+            //TODO could check line of sight before this, a bit more efficient
+            updateUnitTarget(unit, target, delta);
             moveHomingUnit(unit, true, roomMap, debugGraphics);
+            break;
+        case "homing":
+            updateUnitTarget(unit, target, delta);
+            moveHomingUnit(unit, false, roomMap, debugGraphics);
+            break;
+        case "crawlerN":
+            moveCrawlerUnit(unit, target, 'N');
+            break;
+        case "crawlerE":
+            moveCrawlerUnit(unit, target, 'E');
+            break;
+        case "crawlerS":
+            moveCrawlerUnit(unit, target, 'S');
+            break;
+        case "crawlerW":
+            moveCrawlerUnit(unit, target, 'W');
             break;
     }
 
@@ -18,6 +41,9 @@ const pathDistanceCheck = 16;
 
 //TODO make variable depending on unit/weapon
 const lineOfSightWidth = 20;
+
+/** How often to redo pathfinding logic for homing units */
+const pathfindIntervalMs = 500;
 
 /** Check if the origin can see the target in the current room. Return true if line of sight is free. */
 export function checkLineOfSight(origin: Phaser.Types.Math.Vector2Like, target: Phaser.Types.Math.Vector2Like,
@@ -117,8 +143,13 @@ function trackUnitHealthBar(unit: Unit) {
 }
 
 /** Generate a path for the unit to follow to the target using the room's navmesh */
-export function updateUnitTarget(unit: Unit, navMesh, target: Phaser.Types.Math.Vector2Like) {
-    let path = navMesh.findPath(
+export function updateUnitTarget(unit: Unit, target: Phaser.Types.Math.Vector2Like, delta: number) {
+    unit.timeSincePathfindMs += delta;
+    if (unit.timeSincePathfindMs < pathfindIntervalMs) {
+        return;
+    }
+
+    let path = activeNavmesh.findPath(
         { x: unit.gameObj.body.center.x, y: unit.gameObj.body.center.y }, 
         { x: target.x, y: target.y });
     let index = 0;
@@ -133,6 +164,7 @@ export function updateUnitTarget(unit: Unit, navMesh, target: Phaser.Types.Math.
 
     unit.path = path;
     unit.currentPathIndex = index;
+    unit.timeSincePathfindMs = 0;
 }
 
 /** If a unit has reached the current target of its path, then move to the next one */
@@ -174,4 +206,39 @@ export function homingDirection(body : Phaser.Physics.Arcade.Body, target: Phase
     // Estimate impact position, and aim towards it
     let impactPos = relativeTargetVel.scale(eta).add(target);
     return impactPos.subtract(body.center).normalize();
+}
+
+/** How many pixels off the crawler can be when considering itself in line with its target */
+const crawlerErrorMargin = 10;
+
+function moveCrawlerUnit(unit: Unit, target: Phaser.Math.Vector2, wall: string) {
+    switch (wall) {
+        case 'N':
+        case 'S':
+            let xDiff = Math.abs(target.x - unit.gameObj.body.center.x);
+            if (xDiff > crawlerErrorMargin) {
+                if (target.x > unit.gameObj.body.center.x) {
+                    unit.gameObj.setVelocity(unit.maxSpeed, 0);
+                } else {
+                    unit.gameObj.setVelocity(-unit.maxSpeed, 0);
+                }
+            } else {
+                unit.gameObj.setVelocity(0);
+            }
+            break;
+        case 'E':
+        case 'W':
+            let yDiff = Math.abs(target.y - unit.gameObj.body.center.y);
+            if (yDiff > crawlerErrorMargin) {
+                if (target.y > unit.gameObj.body.center.y) {
+                    unit.gameObj.setVelocity(0, unit.maxSpeed);
+                } else {
+                    unit.gameObj.setVelocity(0, -unit.maxSpeed);
+                }
+            } else {
+                unit.gameObj.setVelocity(0);
+            }
+            break;
+    }
+    //console.log("moving crawler");
 }

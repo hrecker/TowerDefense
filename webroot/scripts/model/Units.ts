@@ -32,6 +32,7 @@ export type Unit = {
     currentPathIndex: number;
     playerOwned: boolean;
     purchasable: boolean;
+    timeSincePathfindMs: number;
 }
 
 /** Store unit json data for creating units */
@@ -77,12 +78,13 @@ export function getUnitJsonProperties(name: string) : Unit {
         path: null,
         currentPathIndex: -1,
         playerOwned: unitJson["playerOwned"],
-        purchasable: unitJson["purchasable"]
+        purchasable: unitJson["purchasable"],
+        timeSincePathfindMs: 10000 // Set to a high number so the unit doesn't wait for first pathfind
     };
 }
 
 /** Create a Phaser ImageWithDynamicBody for the unit defined with the given name in units.json */
-export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like, scene: RoomScene) : Unit {
+export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like, scene: RoomScene, crawlerWall?: string) : Unit {
     let unitJson = unitCache[name];
     if (!unitJson) {
         return null;
@@ -105,6 +107,21 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
         healthBarWidth + 2, healthBarHeight + 2, 0, 0.5);
     unit.healthBar = scene.add.rectangle(location.x, location.y - healthBarYPos,
         healthBarWidth, healthBarHeight, healthBarFillColor, 0.5);
+
+    if (unit.movement == "crawler") {
+        unit.movement = "crawler" + crawlerWall;
+        switch (crawlerWall) {
+            case 'N':
+                unitImage.setRotation(Math.PI / 2);
+                break;
+            case 'E':
+                unitImage.setRotation(Math.PI);
+                break;
+            case 'S':
+                unitImage.setRotation(3 * Math.PI / 2);
+                break;
+        }
+    }
 
     unit.id = unitId;
     unit.gameObj = unitImage;
