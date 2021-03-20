@@ -39,6 +39,8 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
 function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
     //TODO arcade physics group for bullets rather than destroying them and creating new ones?
     let bullet = scene.physics.add.image(unit.gameObj.body.center.x, unit.gameObj.body.center.y, bulletName);
+    //TODO different body sizes for different bullets
+    bullet.body.setCircle(8);
     bullet.setName(bulletName);
     let bulletVel = target.clone().subtract(unit.gameObj.body.center).normalize().scale(bulletSpeed);
     bullet.setVelocity(bulletVel.x, bulletVel.y);
