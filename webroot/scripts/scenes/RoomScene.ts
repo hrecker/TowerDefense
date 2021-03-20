@@ -2,19 +2,24 @@ import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { Unit, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
+import { getShopSelection } from "../state/UIState";
 
 let ship: Unit;
 let roomTarget: Unit; // Target the ship is trying to destroy
 let roomMap: Phaser.Tilemaps.Tilemap;
 let roomBlocks: Phaser.Tilemaps.TilemapLayer;
-let crosshairSprite: Phaser.GameObjects.Image;
 let lastShipPos: Phaser.Math.Vector2;
+let lastRoomTargetPos: Phaser.Math.Vector2;
 //let graphics;
 // Nav mesh for units to get around the current room
 let navMesh;
 let sceneUnits: { [id: number]: Unit } = {};
 let playerUnits: Phaser.Physics.Arcade.Group;
 let shipUnits: Phaser.Physics.Arcade.Group;
+
+// Coordinates for placing crawler units in the room
+const crawlerMinTile = 1;
+const crawlerMaxTile = 17;
 
 export class RoomScene extends Phaser.Scene {
     constructor() {
@@ -41,28 +46,13 @@ export class RoomScene extends Phaser.Scene {
         sceneUnits[ship.id] = ship;
         roomTarget = createUnit("target", {x: 400, y: 500}, this);
         sceneUnits[roomTarget.id] = roomTarget;
-        let turret1 = createUnit("turret", {x: 300, y: 300}, this);
-        let turret2 = createUnit("turret", {x: 300, y: 500}, this);
-        let chaser1 = createUnit("chaser", {x: 100, y: 400}, this);
-        let chaser2 = createUnit("chaser", {x: 200, y: 550}, this);
-        let crawler1 = createUnit("crawler", {x: 48, y: 48}, this, 'N');
-        let crawler2 = createUnit("crawler", {x: 560, y: 300}, this, 'E');
-        let crawler3 = createUnit("crawler", {x: 100, y: 560}, this, 'S');
-        let crawler4 = createUnit("crawler", {x: 48, y: 400}, this, 'W');
-        sceneUnits[turret1.id] = turret1;
-        sceneUnits[turret2.id] = turret2;
-        sceneUnits[chaser1.id] = chaser1;
-        sceneUnits[chaser2.id] = chaser2;
-        sceneUnits[crawler1.id] = crawler1;
-        sceneUnits[crawler2.id] = crawler2;
-        sceneUnits[crawler3.id] = crawler3;
-        sceneUnits[crawler4.id] = crawler4;
 
-        playerUnits = this.physics.add.group([turret1.gameObj, turret2.gameObj, chaser1.gameObj, chaser2.gameObj, crawler1.gameObj, crawler2.gameObj, crawler3.gameObj, crawler4.gameObj, roomTarget.gameObj]);
+        playerUnits = this.physics.add.group(roomTarget.gameObj);
         shipUnits = this.physics.add.group(ship.gameObj);
 
         this.physics.add.collider(roomBlocks, shipUnits);
-        this.physics.add.collider(roomBlocks, [crawler1.gameObj, crawler2.gameObj, crawler3.gameObj, crawler4.gameObj]);
+        //TODO future units that don't collide with blocks
+        this.physics.add.collider(roomBlocks, playerUnits);
         this.physics.add.overlap(shipUnits, playerUnits, handleUnitHit, null, this);
 
         navMesh = this["navMeshPlugin"].buildMeshFromTiled("mesh", navMeshLayer, 8);
@@ -78,16 +68,44 @@ export class RoomScene extends Phaser.Scene {
 
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
 
-        crosshairSprite = this.add.image(-1000, -1000, "crosshair");
-
         this.input.on('pointerdown', (pointer) => {
-            if (ship.gameObj.body) {
-                move.updateUnitTarget(ship, pointer, 10000);
-                crosshairSprite.setPosition(pointer.x, pointer.y);
-            } else {
-                crosshairSprite.setVisible(false);
+            if (!this.createUnitFromShopSelection(pointer)) {
+                console.log("Unable to place this unit here");
             }
         });
+    }
+
+    createUnitFromShopSelection(position: Phaser.Types.Math.Vector2Like) {
+        if (getShopSelection()) {
+            // Make sure the position is valid
+            let tile = roomMap.getTileAtWorldXY(position.x, position.y, true);
+            if (tile && tile.collides) {
+                return false;
+            }
+
+            // Snap crawlers to wall and orient them correctly
+            //TODO handle other unit names that attach to walls
+            let wall = null;
+            if (getShopSelection() == "crawler") {
+                if (tile.x == crawlerMinTile) {
+                    wall = 'W';
+                } else if (tile.x == crawlerMaxTile) {
+                    wall = 'E';
+                } else if (tile.y == crawlerMinTile) {
+                    wall = 'N';
+                } else if (tile.y == crawlerMaxTile) {
+                    wall = 'S';
+                } else {
+                    return false;
+                }
+            }
+
+            let unit = createUnit(getShopSelection(), { x: tile.getCenterX(), y: tile.getCenterY() }, this, wall);
+            sceneUnits[unit.id] = unit;
+            playerUnits.add(unit.gameObj);
+            return true;
+        }
+        return false;
     }
 
     getShipUnits() {
@@ -140,11 +158,13 @@ export class RoomScene extends Phaser.Scene {
             target = targetUnit.gameObj.body.center;
             if (targetUnit.name == "ship") {
                 lastShipPos = target;
+            } else if (targetUnit.name == "target") {
+                lastRoomTargetPos = target;
             }
         } else if (unit.playerOwned) {
             target = lastShipPos;
         } else {
-            target = crosshairSprite.getCenter();
+            target = lastRoomTargetPos;
         }
         return target;
     }
