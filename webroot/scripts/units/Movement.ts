@@ -101,7 +101,17 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilema
         return;
     }
 
-    let currentPathIndex = unit.currentPathIndex;
+    // Get direction unit should move to hit target
+    let target = new Phaser.Math.Vector2(unit.path[unit.currentPathIndex]);
+    let homingDir = homingDirection(unit.gameObj.body, target, unit.maxAcceleration);
+    let targetAngle = homingDir.clone().add(unit.gameObj.body.center);
+
+    if (unit.rotation) {
+        // Rotate towards the target
+        let angleBetween = Phaser.Math.Angle.BetweenPoints(unit.gameObj.body.center, targetAngle);
+        unit.gameObj.setRotation(Phaser.Math.Angle.RotateTo(unit.gameObj.rotation, angleBetween, unit.maxAngularSpeed));
+    }
+
     // If the unit only needs line of sight and it has it, don't need to move any more
     if (onlyNeedLOS && checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1], roomMap, debugGraphics)) {
         unit.gameObj.setAcceleration(0);
@@ -112,19 +122,8 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilema
         unit.gameObj.setDrag(0);
     }
 
-    // Get direction unit should move to hit target
-    let target = new Phaser.Math.Vector2(unit.path[currentPathIndex]);
-    let homingDir = homingDirection(unit.gameObj.body, target, unit.maxAcceleration);
-    let targetAngle = homingDir.clone().add(unit.gameObj.body.center);
-
     // Accelerate towards the target
     unit.gameObj.setAcceleration(homingDir.x * unit.maxAcceleration, homingDir.y * unit.maxAcceleration);
-
-    if (unit.rotation) {
-        // Rotate towards the target
-        let angleBetween = Phaser.Math.Angle.BetweenPoints(unit.gameObj.body.center, targetAngle);
-        unit.gameObj.setRotation(Phaser.Math.Angle.RotateTo(unit.gameObj.rotation, angleBetween, unit.maxAngularSpeed));
-    }
 
     // Update current target along path if appropriate
     updatePathTarget(unit);
