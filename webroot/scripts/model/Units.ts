@@ -3,8 +3,13 @@ import { projectileNames } from "../units/Weapon";
 
 let unitCache;
 let unitId = 0;
-let activeOverlaps: { [id: string]: boolean } = {};
+let activeOverlaps: { [id: string]: number } = {};
 let currentFrameOverlaps: { [id: string]: boolean } = {};
+
+// How many frames of constant overlap before triggering overlap again
+// This is necessary so that homing units that are constantly overlapping
+// the ship can do more than one damage.
+const framesToReOverlap = 60;
 
 const healthBarWidth = 64;
 const healthBarHeight = 6;
@@ -171,11 +176,14 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
     let overlapId = id1 + "_" + id2;
 
     currentFrameOverlaps[overlapId] = true;
-    if (activeOverlaps[overlapId]) {
-        // Don't cause multiple collisions while units remain overlapped
+    if (overlapId in activeOverlaps && activeOverlaps[overlapId] > 0 &&
+        activeOverlaps[overlapId] < framesToReOverlap) {
+        // Prevent rapid overlaps after initial overlap
+        activeOverlaps[overlapId]++;
         return;
     }
-    activeOverlaps[overlapId] = true;
+
+    activeOverlaps[overlapId] = 1;
 
     let ship = unit1;
     if (unit2.name == "ship") {
@@ -202,7 +210,7 @@ export function takeDamage(unit: Unit, damage: number) {
 export function updateFrameOverlaps() {
     Object.keys(activeOverlaps).forEach(overlapId => {
         if (!currentFrameOverlaps[overlapId]) {
-            activeOverlaps[overlapId] = undefined;
+            activeOverlaps[overlapId] = 0;
         }
     });
     currentFrameOverlaps = {};
