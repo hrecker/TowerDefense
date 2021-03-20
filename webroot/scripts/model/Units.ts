@@ -203,6 +203,18 @@ export function takeDamage(unit: Unit, damage: number) {
         let healthFraction = unit.health / unit.maxHealth;
         let barWidth = healthBarWidth * healthFraction;
         unit.healthBar.setSize(barWidth, healthBarHeight);
+
+        // Flash on taking hit for some visual feedback
+        unit.gameObj.scene.tweens.addCounter({
+            from: 50,
+            to: 255,
+            duration: 200,
+            onUpdate: function (tween)
+            {
+                const value = Math.floor(tween.getValue());
+                unit.gameObj.setTint(Phaser.Display.Color.GetColor(value, value, value));
+            }
+        })
     }
 }
 
