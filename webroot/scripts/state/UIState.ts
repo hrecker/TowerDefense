@@ -1,10 +1,12 @@
-// Unit selected in the UI
-let shopSelection: string;
+import { Unit } from "../model/Units"
 
-export function setShopSelection(selection: string) {
+// Unit selected in the UI
+let shopSelection: Unit;
+
+export function setShopSelection(selection: Unit) {
     shopSelection = selection;
 }
 
-export function getShopSelection(): string {
+export function getShopSelection(): Unit {
     return shopSelection;
 }

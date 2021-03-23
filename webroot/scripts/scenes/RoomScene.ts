@@ -3,6 +3,7 @@ import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { Unit, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
 import { getShopSelection } from "../state/UIState";
+import { getResources, useResources } from "../state/ResourceState";
 
 let ship: Unit;
 let roomTarget: Unit; // Target the ship is trying to destroy
@@ -76,7 +77,8 @@ export class RoomScene extends Phaser.Scene {
     }
 
     createUnitFromShopSelection(position: Phaser.Types.Math.Vector2Like) {
-        if (getShopSelection()) {
+        let sel = getShopSelection()
+        if (sel && sel.price <= getResources()) {
             // Make sure the position is valid
             let tile = roomMap.getTileAtWorldXY(position.x, position.y, true);
             if (tile && tile.collides) {
@@ -86,7 +88,7 @@ export class RoomScene extends Phaser.Scene {
             // Snap crawlers to wall and orient them correctly
             //TODO handle other unit names that attach to walls
             let wall = null;
-            if (getShopSelection() == "crawler") {
+            if (sel.name == "crawler") {
                 if (tile.x == crawlerMinTile) {
                     wall = 'W';
                 } else if (tile.x == crawlerMaxTile) {
@@ -100,9 +102,10 @@ export class RoomScene extends Phaser.Scene {
                 }
             }
 
-            let unit = createUnit(getShopSelection(), { x: tile.getCenterX(), y: tile.getCenterY() }, this, wall);
+            let unit = createUnit(sel.name, { x: tile.getCenterX(), y: tile.getCenterY() }, this, wall);
             sceneUnits[unit.id] = unit;
             playerUnits.add(unit.gameObj);
+            useResources(sel.price);
             return true;
         }
         return false;

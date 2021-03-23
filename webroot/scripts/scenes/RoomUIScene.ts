@@ -1,5 +1,6 @@
-import { getUnitsJsonProperties } from "../model/Units";
+import { Unit, getUnitsJsonProperties } from "../model/Units";
 import { setShopSelection } from "../state/UIState";
+import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
 
 const unitSelectionBoxWidth = 192;
 const shopSelectionBoxDefaultColor = 0x6400b5;
@@ -8,7 +9,8 @@ const shopSelectionBoxHighlightColor = 0x8a57b3;
 let unitSelectionCenterX;
 let activeShopSelectionIndex = -1;
 let shopSelectionBoxes: Phaser.GameObjects.Rectangle[];
-let purchasableUnits;
+let purchasableUnits: Unit[];
+let currentResourcesText: Phaser.GameObjects.Text;
 
 // UI displayed over RoomScene
 export class RoomUIScene extends Phaser.Scene {
@@ -31,17 +33,21 @@ export class RoomUIScene extends Phaser.Scene {
             this.clearShopSelection();
         });
 
+        currentResourcesText = this.add.text(unitSelectionCenterX, 15, getResources().toString()).setOrigin(0.5);
+        addCurrentResourcesListener(this.updateCurrentResourcesText, this);
+
         purchasableUnits = getUnitsJsonProperties((unit) => unit.purchasable);
         shopSelectionBoxes = []
         for (let i = 0; i < purchasableUnits.length; i++) {
-            let selectionBox = this.add.rectangle(unitSelectionCenterX, 36 + i * 64, 
+            let selectionBox = this.add.rectangle(unitSelectionCenterX, 60 + i * 64,
                 unitSelectionBoxWidth - 20, 58, 0x6400b5);
             shopSelectionBoxes.push(selectionBox);
             selectionBox.setInteractive();
             selectionBox.on("pointerdown", () => {
                 this.selectShopItem(i);
             });
-            this.add.text(unitSelectionCenterX, 32 + i * 64, purchasableUnits[i].name).setOrigin(0.5);
+            this.add.text(unitSelectionCenterX, 44 + i * 64, purchasableUnits[i].name).setOrigin(0.5);
+            this.add.text(unitSelectionCenterX, 64 + i * 64, purchasableUnits[i].price.toString()).setOrigin(0.5);
         }
     }
 
@@ -55,7 +61,7 @@ export class RoomUIScene extends Phaser.Scene {
             }
             activeShopSelectionIndex = index;
             shopSelectionBoxes[index].fillColor = shopSelectionBoxHighlightColor;
-            setShopSelection(purchasableUnits[index].name);
+            setShopSelection(purchasableUnits[index]);
         }
     }
 
@@ -65,5 +71,9 @@ export class RoomUIScene extends Phaser.Scene {
         }
         setShopSelection(null);
         activeShopSelectionIndex = -1;
+    }
+
+    updateCurrentResourcesText(resources: number) {
+        currentResourcesText.setText(resources.toString());
     }
 }

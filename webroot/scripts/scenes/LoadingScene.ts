@@ -1,4 +1,5 @@
 import { loadUnitJson } from "../model/Units";
+import { setResources } from "../state/ResourceState";
 
 // Load json and assets
 export class LoadingScene extends Phaser.Scene {
@@ -29,6 +30,9 @@ export class LoadingScene extends Phaser.Scene {
     create() {
         console.log("Loading scene starting, asset loading complete");
         loadUnitJson(this.cache.json.get("units"));
+        //TODO move this somewhere more appropriate
+        // Start with 200 resources
+        setResources(200);
         this.scene.start("RoomScene")
                   .start("RoomUIScene")
                   .stop();

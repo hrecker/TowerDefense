@@ -22,17 +22,6 @@
         "playerOwned": true,
         "purchasable": false
     },
-    "turret": {
-        "name": "turret",
-        "health": 3,
-        "weapon": "peaShooter",
-        "bodyType": "circle",
-        "bodySize": 14,
-        "bodyOffset": 2,
-        "weaponDelay": 500,
-        "playerOwned": true,
-        "purchasable": true
-    },
     "chaser": {
         "name": "chaser",
         "movement": "homing",
@@ -43,7 +32,20 @@
         "bodySize": 14,
         "bodyOffset": 2,
         "playerOwned": true,
-        "purchasable": true
+        "purchasable": true,
+        "price": 25
+    },
+    "turret": {
+        "name": "turret",
+        "health": 3,
+        "weapon": "peaShooter",
+        "bodyType": "circle",
+        "bodySize": 14,
+        "bodyOffset": 2,
+        "weaponDelay": 500,
+        "playerOwned": true,
+        "purchasable": true,
+        "price": 50
     },
     "crawler": {
         "name": "crawler",
@@ -56,6 +58,7 @@
         "bodyOffset": 2,
         "weaponDelay": 1000,
         "playerOwned": true,
-        "purchasable": true
+        "purchasable": true,
+        "price": 75
     }
 }

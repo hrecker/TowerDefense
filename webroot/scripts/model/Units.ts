@@ -37,6 +37,7 @@ export type Unit = {
     currentPathIndex: number;
     playerOwned: boolean;
     purchasable: boolean;
+    price: number;
     timeSincePathfindMs: number;
 }
 
@@ -84,6 +85,7 @@ export function getUnitJsonProperties(name: string) : Unit {
         currentPathIndex: -1,
         playerOwned: unitJson["playerOwned"],
         purchasable: unitJson["purchasable"],
+        price: unitJson["price"],
         timeSincePathfindMs: 10000 // Set to a high number so the unit doesn't wait for first pathfind
     };
 }
