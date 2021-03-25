@@ -3,6 +3,8 @@ let timeUntilSpawnMsCallbacks = [];
 
 let shipActive: boolean = false;
 let shipActiveCallbacks = [];
+let targetActive: boolean = false;
+let targetActiveCallbacks = [];
 
 export function setTimeUntilSpawnMs(timeUntilSpawn: number) {
     if (timeUntilSpawnMs == timeUntilSpawn) {
@@ -28,7 +30,6 @@ export function addTimeUntilSpawnMsListener(callback, scene) {
 }
 
 export function setShipActive(isActive: boolean) {
-    console.log("setting ship active " + isActive);
     if (shipActive == isActive) {
         return;
     }
@@ -43,6 +44,26 @@ export function isShipActive() {
 
 export function addShipActiveListener(callback, scene) {
     shipActiveCallbacks.push({ 
+        callback: callback,
+        scene: scene
+    });
+}
+
+export function setTargetActive(isActive: boolean) {
+    if (targetActive == isActive) {
+        return;
+    }
+    targetActive = isActive;
+    targetActiveCallbacks.forEach(callback => 
+        callback.callback(isTargetActive(), callback.scene));
+}
+
+export function isTargetActive() {
+    return targetActive;
+}
+
+export function addTargetActiveListener(callback, scene) {
+    targetActiveCallbacks.push({ 
         callback: callback,
         scene: scene
     });

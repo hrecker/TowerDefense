@@ -1,6 +1,6 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
 import { setShopSelection } from "../state/UIState";
-import { addTimeUntilSpawnMsListener, addShipActiveListener } from "../state/RoomState";
+import { addTimeUntilSpawnMsListener, addShipActiveListener, addTargetActiveListener, isTargetActive } from "../state/RoomState";
 import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
 
 const unitSelectionBoxWidth = 192;
@@ -41,6 +41,7 @@ export class RoomUIScene extends Phaser.Scene {
         roomStatusText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 75, "0:15", { fontSize: "32px" }).setOrigin(0.5);
         addTimeUntilSpawnMsListener(this.updateSpawnTimeRemainingText, this);
         addShipActiveListener(this.updateRoomStatusShipActive, this);
+        addTargetActiveListener(this.updateRoomStatusTargetActive, this);
 
         purchasableUnits = getUnitsJsonProperties((unit) => unit.purchasable);
         shopSelectionBoxes = []
@@ -97,11 +98,18 @@ export class RoomUIScene extends Phaser.Scene {
     }
 
     updateRoomStatusShipActive(shipActive: boolean) {
-        if (shipActive) {
+        if (shipActive && isTargetActive()) {
             roomStatusText.setText("Under attack!");
             roomStatusText.setStyle({ fontSize: "20px" })
-        } else {
+        } else if (isTargetActive()) {
+            //TODO could prematurely say room defended when ship is destroyed with a bullet on the way to destroying the target
             roomStatusText.setText("Room defended!");
+        }
+    }
+
+    updateRoomStatusTargetActive(targetActive: boolean) {
+        if (!targetActive) {
+            roomStatusText.setText("Defense failed!");
         }
     }
 }

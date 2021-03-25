@@ -3,7 +3,7 @@ import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { Unit, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
 import { getShopSelection } from "../state/UIState";
-import { setTimeUntilSpawnMs, setShipActive } from "../state/RoomState";
+import { setTimeUntilSpawnMs, setShipActive, setTargetActive } from "../state/RoomState";
 import { getResources, useResources } from "../state/ResourceState";
 
 let ship: Unit;
@@ -68,6 +68,7 @@ export class RoomScene extends Phaser.Scene {
         sceneUnits = [];
         roomTarget = createUnit("target", {x: 400, y: 500}, this);
         sceneUnits[roomTarget.id] = roomTarget;
+        setTargetActive(true);
 
         playerUnits = this.physics.add.group(roomTarget.gameObj);
         shipUnits = this.physics.add.group();
@@ -173,6 +174,8 @@ export class RoomScene extends Phaser.Scene {
                     console.log("Deleting unit " + sceneUnits[id].name);
                     if (sceneUnits[id].name == "ship") {
                         setShipActive(false);
+                    } else if (sceneUnits[id].name == "target") {
+                        setTargetActive(false);
                     }
                     delete sceneUnits[id];
                 }
