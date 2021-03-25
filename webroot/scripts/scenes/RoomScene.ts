@@ -3,6 +3,7 @@ import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { Unit, createUnit, handleUnitHit, updateFrameOverlaps } from "../model/Units";
 import { getShopSelection } from "../state/UIState";
+import { setTimeUntilSpawnMs, setShipActive } from "../state/RoomState";
 import { getResources, useResources } from "../state/ResourceState";
 
 let ship: Unit;
@@ -18,6 +19,12 @@ let sceneUnits: { [id: number]: Unit } = {};
 let playerUnits: Phaser.Physics.Arcade.Group;
 let shipUnits: Phaser.Physics.Arcade.Group;
 
+//TODO vary by room or level?
+const initialSetupTimeMs = 5000;
+let setupTimeRemainingMs = initialSetupTimeMs;
+let shipSpawnPos = { x: 200, y: 200 }
+let shipSpawnSprite: Phaser.GameObjects.Image;
+
 // Coordinates for placing crawler units in the room
 const crawlerMinTile = 1;
 const crawlerMaxTile = 17;
@@ -32,6 +39,7 @@ export class RoomScene extends Phaser.Scene {
     create() {
         console.log("RoomScene starting");
         this.cameras.main.setBackgroundColor(backgroundColor);
+        setTimeUntilSpawnMs(setupTimeRemainingMs);
         //graphics = this.add.graphics();
 
         // Room tiles
@@ -41,15 +49,28 @@ export class RoomScene extends Phaser.Scene {
         let navMeshLayer = roomMap.getObjectLayer("navmesh");
         roomBlocks.setCollisionByProperty({ collides: true });
 
+        shipSpawnSprite = this.add.image(shipSpawnPos.x, shipSpawnPos.y, "ship");
+        this.tweens.addCounter({
+            from: 50,
+            to: 255,
+            duration: 500,
+            ease: "Sine.InOut",
+            yoyo: true,
+            loop: -1,
+            onUpdate: function (tween)
+            {
+                const value = Math.floor(tween.getValue());
+                shipSpawnSprite.setTint(Phaser.Display.Color.GetColor(value, value, value));
+            }
+        });
+
         // Units
         sceneUnits = [];
-        ship = createUnit("ship", {x: 200, y: 200}, this);
-        sceneUnits[ship.id] = ship;
         roomTarget = createUnit("target", {x: 400, y: 500}, this);
         sceneUnits[roomTarget.id] = roomTarget;
 
         playerUnits = this.physics.add.group(roomTarget.gameObj);
-        shipUnits = this.physics.add.group(ship.gameObj);
+        shipUnits = this.physics.add.group();
 
         this.physics.add.collider(roomBlocks, shipUnits);
         //TODO future units that don't collide with blocks
@@ -67,13 +88,20 @@ export class RoomScene extends Phaser.Scene {
           drawPortals: false
         });*/
 
-        move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
-
         this.input.on('pointerdown', (pointer) => {
             if (!this.createUnitFromShopSelection(pointer)) {
                 console.log("Unable to place this unit here");
             }
         });
+    }
+
+    spawnShipUnit() {
+        shipSpawnSprite.destroy();
+        ship = createUnit("ship", {x: 200, y: 200}, this);
+        sceneUnits[ship.id] = ship;
+        shipUnits.add(ship.gameObj);
+        move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
+        setShipActive(true);
     }
 
     createUnitFromShopSelection(position: Phaser.Types.Math.Vector2Like) {
@@ -131,22 +159,34 @@ export class RoomScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        // Remove units from sceneUnits when they are destroyed
-        Object.keys(sceneUnits).forEach(id => {
-            if (!sceneUnits[id].gameObj.body) {
-                console.log("Deleting unit " + sceneUnits[id].name);
-                delete sceneUnits[id];
+        if (setupTimeRemainingMs > 0) {
+            // Still counting down until ship spawns
+            setupTimeRemainingMs -= delta;
+            setTimeUntilSpawnMs(setupTimeRemainingMs);
+            if (setupTimeRemainingMs <= 0) {
+                this.spawnShipUnit();
             }
-        });
+        } else {
+            // Remove units from sceneUnits when they are destroyed
+            Object.keys(sceneUnits).forEach(id => {
+                if (!sceneUnits[id].gameObj.body) {
+                    console.log("Deleting unit " + sceneUnits[id].name);
+                    if (sceneUnits[id].name == "ship") {
+                        setShipActive(false);
+                    }
+                    delete sceneUnits[id];
+                }
+            });
 
-        Object.keys(sceneUnits).forEach(id => {
-            // Pass in graphics for some debugging (the arcade physics debug property must be set to true)
-            move.moveUnit(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), roomMap, delta, null /*graphics*/);
-        });
-        Object.keys(sceneUnits).forEach(id => {
-            weapon.updateUnitWeapon(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), delta, this);
-        });
-        updateFrameOverlaps();
+            Object.keys(sceneUnits).forEach(id => {
+                // Pass in graphics for some debugging (the arcade physics debug property must be set to true)
+                move.moveUnit(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), roomMap, delta, null /*graphics*/);
+            });
+            Object.keys(sceneUnits).forEach(id => {
+                weapon.updateUnitWeapon(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), delta, this);
+            });
+            updateFrameOverlaps();
+        }
     }
 
     getUnitTarget(unit): Phaser.Math.Vector2 {
@@ -159,15 +199,6 @@ export class RoomScene extends Phaser.Scene {
         let target;
         if (targetUnit && targetUnit.gameObj.body) {
             target = targetUnit.gameObj.body.center;
-            if (targetUnit.name == "ship") {
-                lastShipPos = target;
-            } else if (targetUnit.name == "target") {
-                lastRoomTargetPos = target;
-            }
-        } else if (unit.playerOwned) {
-            target = lastShipPos;
-        } else {
-            target = lastRoomTargetPos;
         }
         return target;
     }

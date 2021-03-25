@@ -216,7 +216,7 @@ export function takeDamage(unit: Unit, damage: number) {
                 const value = Math.floor(tween.getValue());
                 unit.gameObj.setTint(Phaser.Display.Color.GetColor(value, value, value));
             }
-        })
+        });
     }
 }
 

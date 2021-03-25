@@ -8,28 +8,30 @@ export function setRoomNavmesh(navmesh) {
 
 /** Move a unit for one frame (call each frame in the update method of a scene) */
 export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phaser.Tilemaps.Tilemap, delta: number, debugGraphics: Phaser.GameObjects.Graphics) {
-    switch (unit.movement) {
-        case "homingLOS":
-            //TODO could check line of sight before this, a bit more efficient
-            updateUnitTarget(unit, target, delta);
-            moveHomingUnit(unit, true, roomMap, debugGraphics);
-            break;
-        case "homing":
-            updateUnitTarget(unit, target, delta);
-            moveHomingUnit(unit, false, roomMap, debugGraphics);
-            break;
-        case "crawlerN":
-            moveCrawlerUnit(unit, target, 'N');
-            break;
-        case "crawlerE":
-            moveCrawlerUnit(unit, target, 'E');
-            break;
-        case "crawlerS":
-            moveCrawlerUnit(unit, target, 'S');
-            break;
-        case "crawlerW":
-            moveCrawlerUnit(unit, target, 'W');
-            break;
+    if (target) {
+        switch (unit.movement) {
+            case "homingLOS":
+                //TODO could check line of sight before this, a bit more efficient
+                updateUnitTarget(unit, target, delta);
+                moveHomingUnit(unit, true, roomMap, debugGraphics);
+                break;
+            case "homing":
+                updateUnitTarget(unit, target, delta);
+                moveHomingUnit(unit, false, roomMap, debugGraphics);
+                break;
+            case "crawlerN":
+                moveCrawlerUnit(unit, target, 'N');
+                break;
+            case "crawlerE":
+                moveCrawlerUnit(unit, target, 'E');
+                break;
+            case "crawlerS":
+                moveCrawlerUnit(unit, target, 'S');
+                break;
+            case "crawlerW":
+                moveCrawlerUnit(unit, target, 'W');
+                break;
+        }
     }
 
     clampUnitSpeed(unit);

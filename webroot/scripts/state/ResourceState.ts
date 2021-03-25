@@ -9,10 +9,10 @@ export function setResources(resources: number) {
     if (currentResources == resources) {
         return;
     }
+    currentResources = resources;
     if (currentResources < 0) {
         currentResources = 0;
     }
-    currentResources = resources;
     currentResourcesCallbacks.forEach(callback => 
         callback.callback(getResources(), callback.scene));
 }
