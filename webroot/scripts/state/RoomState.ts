@@ -1,69 +1,54 @@
-let timeUntilSpawnMs: number;
-let timeUntilSpawnMsCallbacks = [];
+let timerMs: number;
+let timerMsCallbacks = [];
 
-let shipActive: boolean = false;
-let shipActiveCallbacks = [];
-let targetActive: boolean = false;
-let targetActiveCallbacks = [];
+export enum RoomStatus {
+    COUNTDOWN,
+    ACTIVE,
+    VICTORY,
+    DEFEAT
+};
 
-export function setTimeUntilSpawnMs(timeUntilSpawn: number) {
-    if (timeUntilSpawnMs == timeUntilSpawn) {
+let roomStatus: RoomStatus;
+let roomStatusCallbacks = [];
+
+export function setTimerMs(timeLeft: number) {
+    if (timerMs == timeLeft) {
         return;
     }
-    timeUntilSpawnMs = timeUntilSpawn;
-    if (timeUntilSpawnMs < 0) {
-        timeUntilSpawnMs = 0;
+    timerMs = timeLeft;
+    if (timerMs < 0) {
+        timerMs = 0;
     }
-    timeUntilSpawnMsCallbacks.forEach(callback => 
-        callback.callback(getTimeUntilSpawnMs(), callback.scene));
+    timerMsCallbacks.forEach(callback => 
+        callback.callback(getTimerMs(), callback.scene));
 }
 
-export function getTimeUntilSpawnMs() {
-    return timeUntilSpawnMs;
+export function getTimerMs() {
+    return timerMs;
 }
 
-export function addTimeUntilSpawnMsListener(callback, scene) {
-    timeUntilSpawnMsCallbacks.push({ 
+export function addTimerMsListener(callback, scene) {
+    timerMsCallbacks.push({ 
         callback: callback,
         scene: scene
     });
 }
 
-export function setShipActive(isActive: boolean) {
-    if (shipActive == isActive) {
+export function setRoomStatus(status: RoomStatus) {
+    if (roomStatus == status) {
         return;
     }
-    shipActive = isActive;
-    shipActiveCallbacks.forEach(callback => 
-        callback.callback(isShipActive(), callback.scene));
+    roomStatus = status;
+    roomStatusCallbacks.forEach(callback => 
+        callback.callback(getRoomStatus(), callback.scene));
 }
 
-export function isShipActive() {
-    return shipActive;
+export function getRoomStatus(): RoomStatus {
+    return roomStatus;
 }
 
-export function addShipActiveListener(callback, scene) {
-    shipActiveCallbacks.push({ 
-        callback: callback,
-        scene: scene
-    });
-}
-
-export function setTargetActive(isActive: boolean) {
-    if (targetActive == isActive) {
-        return;
-    }
-    targetActive = isActive;
-    targetActiveCallbacks.forEach(callback => 
-        callback.callback(isTargetActive(), callback.scene));
-}
-
-export function isTargetActive() {
-    return targetActive;
-}
-
-export function addTargetActiveListener(callback, scene) {
-    targetActiveCallbacks.push({ 
+export function addRoomStatusListener(callback, scene) {
+    roomStatusCallbacks.push({ 
         callback: callback,
         scene: scene
     });

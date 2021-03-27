@@ -1,6 +1,6 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
 import { setShopSelection } from "../state/UIState";
-import { addTimeUntilSpawnMsListener, addShipActiveListener, addTargetActiveListener, isTargetActive } from "../state/RoomState";
+import { addTimerMsListener, addRoomStatusListener, getRoomStatus, RoomStatus } from "../state/RoomState";
 import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
 
 const unitSelectionBoxWidth = 192;
@@ -13,6 +13,7 @@ let shopSelectionBoxes: Phaser.GameObjects.Rectangle[];
 let purchasableUnits: Unit[];
 let currentResourcesText: Phaser.GameObjects.Text;
 let roomStatusText: Phaser.GameObjects.Text;
+let timerText: Phaser.GameObjects.Text;
 
 // UI displayed over RoomScene
 export class RoomUIScene extends Phaser.Scene {
@@ -37,11 +38,13 @@ export class RoomUIScene extends Phaser.Scene {
 
         currentResourcesText = this.add.text(unitSelectionCenterX, 15, getResources().toString()).setOrigin(0.5);
         addCurrentResourcesListener(this.updateCurrentResourcesText, this);
+        this.updateCurrentResourcesText(getResources());
 
-        roomStatusText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 75, "0:15", { fontSize: "32px" }).setOrigin(0.5);
-        addTimeUntilSpawnMsListener(this.updateSpawnTimeRemainingText, this);
-        addShipActiveListener(this.updateRoomStatusShipActive, this);
-        addTargetActiveListener(this.updateRoomStatusTargetActive, this);
+        roomStatusText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 100, "Status Text", { fontSize: "18px" }).setOrigin(0.5);
+        timerText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 50, "99:99", { fontSize: "32px" }).setOrigin(0.5);
+        addTimerMsListener(this.updateTimerText, this);
+        addRoomStatusListener(this.updateRoomStatus, this);
+        this.updateRoomStatus(RoomStatus.COUNTDOWN);
 
         purchasableUnits = getUnitsJsonProperties((unit) => unit.purchasable);
         shopSelectionBoxes = []
@@ -84,32 +87,31 @@ export class RoomUIScene extends Phaser.Scene {
         currentResourcesText.setText(resources.toString());
     }
 
-    updateSpawnTimeRemainingText(timeUntilSpawnMs: number) {
-        //TODO assumes no spawn time will be longer than 9 minutes 59 seconds
-        let totalSeconds = Math.ceil(timeUntilSpawnMs / 1000);
+    updateTimerText(timerMs: number) {
+        // Assumes no timer will be longer than 9 minutes 59 seconds
+        let totalSeconds = Math.ceil(timerMs / 1000);
         let minutes = Math.floor(totalSeconds / 60);
         let seconds = (totalSeconds - (minutes * 60)).toString();
-        if (totalSeconds > 0) {
-            if (seconds.length == 1) {
-                seconds = `0${seconds}`;
-            }
-            roomStatusText.setText(`${minutes}:${seconds}`);
+        if (seconds.length == 1) {
+            seconds = `0${seconds}`;
         }
+        timerText.setText(`${minutes}:${seconds}`);
     }
 
-    updateRoomStatusShipActive(shipActive: boolean) {
-        if (shipActive && isTargetActive()) {
-            roomStatusText.setText("Under attack!");
-            roomStatusText.setStyle({ fontSize: "20px" })
-        } else if (isTargetActive()) {
-            //TODO could prematurely say room defended when ship is destroyed with a bullet on the way to destroying the target
-            roomStatusText.setText("Room defended!");
-        }
-    }
-
-    updateRoomStatusTargetActive(targetActive: boolean) {
-        if (!targetActive) {
-            roomStatusText.setText("Defense failed!");
+    updateRoomStatus(status: RoomStatus) {
+        switch(status) {
+            case RoomStatus.ACTIVE:
+                roomStatusText.setText("Under attack!");
+                break;
+            case RoomStatus.COUNTDOWN:
+                roomStatusText.setText("Ship incoming...");
+                break;
+            case RoomStatus.DEFEAT:
+                roomStatusText.setText("Defense failed!");
+                break;
+            case RoomStatus.VICTORY:
+                roomStatusText.setText("Room defended!");
+                break;
         }
     }
 }

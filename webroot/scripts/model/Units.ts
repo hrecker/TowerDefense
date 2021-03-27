@@ -136,6 +136,7 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
 }
 
 export function destroyUnit(unit: Unit) {
+    console.log("Unit destroy call on " + unit.id);
     unit.gameObj.destroy();
     unit.healthBarBackground.destroy();
     unit.healthBar.destroy();
@@ -168,6 +169,13 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
 export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamicBody, obj2: Phaser.Types.Physics.Arcade.ImageWithDynamicBody) {
     let unit1: Unit = this.getUnit(obj1.getData("id"));
     let unit2: Unit = this.getUnit(obj2.getData("id"));
+
+    // When the ship is overlapping multiple player units and is destroyed before the last one,
+    // in the subsequent overlap calls it can be null.
+    if (!unit1 || !unit2) {
+        console.log("Null unit, skipping this overlap");
+        return;
+    }
 
     let id1 = unit1.id;
     let id2 = unit2.id;
