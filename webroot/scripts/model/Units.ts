@@ -150,8 +150,13 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
     } else if (projectileNames.includes(obj2.name)) {
         bullet = obj2;
     }
-    if (bullet) {
+    if (bullet && bullet.getData("id")) {
         bullet.destroy();
+    } else {
+        // If bullet isn't defined or has no id, it has already hit something. In that case,
+        // don't damage the unit, so that one bullet can't hit multiple units
+        //TODO this behavior may need to change for projectiles that pierce enemies
+        return;
     }
     
     let unit: Unit = this.getUnit(obj1.getData("id"));

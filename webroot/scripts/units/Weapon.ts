@@ -36,11 +36,15 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
     }
 }
 
+let bulletId = 0;
 function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene, bulletGroup: Phaser.Physics.Arcade.Group) {
     //TODO arcade physics group for bullets rather than destroying them and creating new ones?
     let bullet = scene.physics.add.image(unit.gameObj.body.center.x, unit.gameObj.body.center.y, bulletName);
     bulletGroup.add(bullet);
     bullet.setData("isBullet", true);
+    bullet.setData("id", bulletId);
+    //TODO any worry about hitting max int here...?
+    bulletId++;
     //TODO different body sizes for different bullets
     bullet.body.setCircle(8);
     bullet.setName(bulletName);
