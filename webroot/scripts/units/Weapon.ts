@@ -36,29 +36,25 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
     }
 }
 
-function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
+function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene, bulletGroup: Phaser.Physics.Arcade.Group) {
     //TODO arcade physics group for bullets rather than destroying them and creating new ones?
     let bullet = scene.physics.add.image(unit.gameObj.body.center.x, unit.gameObj.body.center.y, bulletName);
+    bulletGroup.add(bullet);
+    bullet.setData("isBullet", true);
     //TODO different body sizes for different bullets
     bullet.body.setCircle(8);
     bullet.setName(bulletName);
     let bulletVel = target.clone().subtract(unit.gameObj.body.center).normalize().scale(bulletSpeed);
     bullet.setVelocity(bulletVel.x, bulletVel.y);
-    // Destroy on touching geometry
-    scene.physics.add.collider(bullet, scene.getRoomBlocks(), () => bullet.destroy());
     // Destroy bullet after enough time passes for it to go off screen, just in case something weird happens
     scene.time.delayedCall(bulletLifetimeMs, () => bullet.destroy());
     return bullet;
 }
 
 function firePlayerBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
-    let bullet = createBullet("playerBullet", unit, target, scene);
-    // Handle hit on target
-    scene.physics.add.overlap(bullet, scene.getShipUnits(), handleProjectileHit, null, scene);
+    createBullet("playerBullet", unit, target, scene, scene.getPlayerBulletGroup());
 }
 
 function fireShipBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
-    let bullet = createBullet("shipBullet", unit, target, scene);
-    // Handle hit on target
-    scene.physics.add.overlap(bullet, scene.getPlayerUnits(), handleProjectileHit, null, scene);
+    createBullet("shipBullet", unit, target, scene, scene.getShipBulletGroup());
 }

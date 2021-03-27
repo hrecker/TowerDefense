@@ -135,7 +135,7 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
     return unit;
 }
 
-function destroyUnit(unit: Unit) {
+export function destroyUnit(unit: Unit) {
     unit.gameObj.destroy();
     unit.healthBarBackground.destroy();
     unit.healthBar.destroy();
