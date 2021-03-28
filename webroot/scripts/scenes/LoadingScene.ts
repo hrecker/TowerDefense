@@ -1,5 +1,4 @@
 import { loadUnitJson } from "../model/Units";
-import { setResources } from "../state/ResourceState";
 
 // Load json and assets
 export class LoadingScene extends Phaser.Scene {
@@ -21,7 +20,10 @@ export class LoadingScene extends Phaser.Scene {
         this.load.image("block", "assets/sprites/block.png");
 
         // Load room tilemaps
+        this.load.json("rooms", "assets/rooms/rooms.json");
         this.load.tilemapTiledJSON("room1", "assets/rooms/room1.json");
+        this.load.tilemapTiledJSON("room2", "assets/rooms/room2.json");
+        this.load.tilemapTiledJSON("room3", "assets/rooms/room3.json");
 
         // Load json
         this.load.json("units", "assets/units/units.json");

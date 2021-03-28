@@ -1,0 +1,32 @@
+{
+    "room1": {
+        "shipSpawn": {
+            "x": 200,
+            "y": 200
+        },
+        "targetSpawn": {
+            "x": 400,
+            "y": 500
+        }
+    },
+    "room2": {
+        "shipSpawn": {
+            "x": 60,
+            "y": 304
+        },
+        "targetSpawn": {
+            "x": 530,
+            "y": 530
+        }
+    },
+    "room3": {
+        "shipSpawn": {
+            "x": 304,
+            "y": 304
+        },
+        "targetSpawn": {
+            "x": 530,
+            "y": 80
+        }
+    }
+}

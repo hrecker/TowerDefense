@@ -7,14 +7,13 @@ import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/R
 import { setResources, getResources, useResources } from "../state/ResourceState";
 
 let ship: Unit;
-let roomName = "room1";
+let roomNum = 3;
 let roomTarget: Unit; // Target the ship is trying to destroy
 let roomMap: Phaser.Tilemaps.Tilemap;
 let roomBlocks: Phaser.Tilemaps.TilemapLayer;
 //let graphics;
 // Nav mesh for units to get around the current room
 let navMesh;
-let roomNavMeshes = {};
 let sceneUnits: { [id: number]: Unit } = {};
 let playerUnits: Phaser.Physics.Arcade.Group;
 let shipUnits: Phaser.Physics.Arcade.Group;
@@ -29,7 +28,6 @@ let unitOverlap;
 //TODO vary by room or level?
 const transitionTimeMs = 5000;
 let timerRemainingMs;
-let shipSpawnPos = { x: 200, y: 200 }
 let shipSpawnSprite: Phaser.GameObjects.Image;
 
 let lastShipPos: Phaser.Math.Vector2;
@@ -49,7 +47,7 @@ export class RoomScene extends Phaser.Scene {
     create() {
         console.log("RoomScene starting");
         this.cameras.main.setBackgroundColor(backgroundColor);
-        this.startRoom(roomName);
+        this.startRoom("room" + roomNum);
         this.input.on('pointerdown', (pointer) => {
             if (!this.createUnitFromShopSelection(pointer)) {
                 console.log("Unable to place this unit here");
@@ -58,6 +56,10 @@ export class RoomScene extends Phaser.Scene {
     }
 
     startRoom(room: string) {
+        let roomJson = this.cache.json.get("rooms")[room];
+        let shipSpawnPos = roomJson["shipSpawn"];
+        let targetSpawnPos = roomJson["targetSpawn"];
+
         setRoomStatus(RoomStatus.COUNTDOWN);
         //TODO move this somewhere more appropriate, get resources from success in previous rooms
         // Start with 200 resources
@@ -91,7 +93,7 @@ export class RoomScene extends Phaser.Scene {
 
         // Units
         sceneUnits = {};
-        roomTarget = createUnit("target", {x: 400, y: 500}, this);
+        roomTarget = createUnit("target", targetSpawnPos, this);
         sceneUnits[roomTarget.id] = roomTarget;
 
         playerUnits = this.physics.add.group(roomTarget.gameObj);
@@ -138,10 +140,7 @@ export class RoomScene extends Phaser.Scene {
         this.physics.add.collider(roomBlocks, playerUnits);
         unitOverlap = this.physics.add.overlap(shipUnits, playerUnits, handleUnitHit, null, this);
 
-        if (!roomNavMeshes[room]) {
-            roomNavMeshes[room] = this["navMeshPlugin"].buildMeshFromTiled("mesh", navMeshLayer, 8);
-        }
-        navMesh = roomNavMeshes[room];
+        navMesh = this["navMeshPlugin"].buildMeshFromTiled(room, navMeshLayer, 8);
         move.setRoomNavmesh(navMesh);
         // Visualize the underlying navmesh
         //navMesh.enableDebug(); 
@@ -155,7 +154,7 @@ export class RoomScene extends Phaser.Scene {
 
     spawnShipUnit() {
         shipSpawnSprite.destroy();
-        ship = createUnit("ship", {x: 200, y: 200}, this);
+        ship = createUnit("ship", shipSpawnSprite.getCenter(), this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
@@ -236,11 +235,14 @@ export class RoomScene extends Phaser.Scene {
     handleRoomVictory() {
         setRoomStatus(RoomStatus.VICTORY);
         this.startRoomTransition();
+        //TODO better way to keep count of max room
+        roomNum = Math.min(roomNum + 1, 3);
     }
 
     handleRoomDefeat() {
         setRoomStatus(RoomStatus.DEFEAT);
         this.startRoomTransition();
+        roomNum = 1;
     }
 
     moveUnits(delta) {
