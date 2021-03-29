@@ -35,6 +35,7 @@ export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phase
     }
 
     clampUnitSpeed(unit);
+    clampUnitPosition(unit);
     trackUnitHealthBar(unit);
 }
 
@@ -138,6 +139,24 @@ function clampUnitSpeed(unit: Unit) {
     }
 }
 
+function clampUnitPosition(unit: Unit) {
+    if (unit.minX != -1 && unit.gameObj.x < unit.minX) {
+        unit.gameObj.setPosition(unit.minX, unit.gameObj.y);
+        unit.gameObj.setVelocity(0);
+    } else if (unit.maxX != -1 && unit.gameObj.x > unit.maxX) {
+        unit.gameObj.setPosition(unit.maxX, unit.gameObj.y);
+        unit.gameObj.setVelocity(0);
+    }
+    
+    if (unit.minY != -1 && unit.gameObj.y < unit.minY) {
+        unit.gameObj.setPosition(unit.gameObj.x, unit.minY);
+        unit.gameObj.setVelocity(0);
+    } else if (unit.maxY != -1 && unit.gameObj.y > unit.maxY) {
+        unit.gameObj.setPosition(unit.gameObj.x, unit.maxY);
+        unit.gameObj.setVelocity(0);
+    }
+}
+
 function trackUnitHealthBar(unit: Unit) {
     unit.healthBar.setPosition(unit.gameObj.body.center.x, unit.gameObj.body.center.y - healthBarYPos);
     unit.healthBarBackground.setPosition(unit.gameObj.body.center.x, unit.gameObj.body.center.y - healthBarYPos);
@@ -218,9 +237,9 @@ function moveCrawlerUnit(unit: Unit, target: Phaser.Math.Vector2, wall: string) 
         case 'S':
             let xDiff = Math.abs(target.x - unit.gameObj.body.center.x);
             if (xDiff > crawlerErrorMargin) {
-                if (target.x > unit.gameObj.body.center.x) {
+                if (target.x > unit.gameObj.body.center.x && (unit.gameObj.x < unit.maxX || unit.maxX == -1)) {
                     unit.gameObj.setVelocity(unit.maxSpeed, 0);
-                } else {
+                } else if (target.x < unit.gameObj.body.center.x && (unit.gameObj.x > unit.minX || unit.maxX == -1)) {
                     unit.gameObj.setVelocity(-unit.maxSpeed, 0);
                 }
             } else {
@@ -231,9 +250,9 @@ function moveCrawlerUnit(unit: Unit, target: Phaser.Math.Vector2, wall: string) 
         case 'W':
             let yDiff = Math.abs(target.y - unit.gameObj.body.center.y);
             if (yDiff > crawlerErrorMargin) {
-                if (target.y > unit.gameObj.body.center.y) {
+                if (target.y > unit.gameObj.body.center.y && (unit.gameObj.y < unit.maxY || unit.maxY == -1)) {
                     unit.gameObj.setVelocity(0, unit.maxSpeed);
-                } else {
+                } else if (target.y < unit.gameObj.body.center.y && (unit.gameObj.y > unit.minY || unit.minY == -1)) {
                     unit.gameObj.setVelocity(0, -unit.maxSpeed);
                 }
             } else {
@@ -241,5 +260,4 @@ function moveCrawlerUnit(unit: Unit, target: Phaser.Math.Vector2, wall: string) 
             }
             break;
     }
-    //console.log("moving crawler");
 }

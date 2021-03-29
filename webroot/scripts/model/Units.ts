@@ -24,6 +24,10 @@ export type Unit = {
     maxSpeed: number;
     maxAcceleration: number;
     maxAngularSpeed: number;
+    maxX: number;
+    minX: number;
+    maxY: number;
+    minY: number;
     rotation: boolean;
     health: number;
     maxHealth: number;
@@ -72,6 +76,10 @@ export function getUnitJsonProperties(name: string) : Unit {
         maxSpeed: unitJson["maxSpeed"],
         maxAcceleration: unitJson["maxAcceleration"],
         maxAngularSpeed: unitJson["maxAngularSpeed"],
+        minX: -1,
+        maxX: -1,
+        minY: -1,
+        maxY: -1,
         rotation: unitJson["rotation"],
         health: unitJson["health"],
         maxHealth: unitJson["health"],
@@ -117,15 +125,24 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
 
     if (unit.movement == "crawler") {
         unit.movement = "crawler" + crawlerWall;
+        let roomBlocks = scene.getRoomBlocks();
+        let startingTile = roomBlocks.getTileAtWorldXY(location.x, location.y, true);
+
         switch (crawlerWall) {
             case 'N':
                 unitImage.setRotation(Math.PI / 2);
+                setMinMaxX(unit, startingTile.x, startingTile.y - 1, roomBlocks);
                 break;
             case 'E':
                 unitImage.setRotation(Math.PI);
+                setMinMaxY(unit, startingTile.x + 1, startingTile.y, roomBlocks);
                 break;
             case 'S':
                 unitImage.setRotation(3 * Math.PI / 2);
+                setMinMaxX(unit, startingTile.x, startingTile.y + 1, roomBlocks);
+                break;
+            case 'W':
+                setMinMaxY(unit, startingTile.x - 1, startingTile.y, roomBlocks);
                 break;
         }
     }
@@ -135,8 +152,51 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
     return unit;
 }
 
+//TODO may need updated if I have tiles that collide but don't allow crawlers on them
+function setMinMaxX(unit: Unit, startingTileX: number, startingWallTileY: number, roomBlocks: Phaser.Tilemaps.TilemapLayer) {
+    let x = startingTileX;
+    while (x > 0) {
+        x--;
+        let tile = roomBlocks.getTileAt(x, startingWallTileY, true);
+        if (!tile.collides) {
+            unit.minX = tile.pixelX + 3 * tile.width / 2;
+            break;
+        }
+    }
+    x = startingTileX;
+    while (x < 18) {
+        x++;
+        let tile = roomBlocks.getTileAt(x, startingWallTileY, true);
+        if (!tile.collides) {
+            unit.maxX = tile.pixelX - tile.width / 2;
+            break;
+        }
+    }
+}
+
+//TODO may need updated if I have tiles that collide but don't allow crawlers on them
+function setMinMaxY(unit: Unit, startingWallTileX: number, startingTileY: number, roomBlocks: Phaser.Tilemaps.TilemapLayer) {
+    let y = startingTileY;
+    while (y > 0) {
+        y--;
+        let tile = roomBlocks.getTileAt(startingWallTileX, y, true);
+        if (!tile.collides) {
+            unit.minY = tile.pixelY + 3 * tile.width / 2;
+            break;
+        }
+    }
+    y = startingTileY;
+    while (y < 18) {
+        y++;
+        let tile = roomBlocks.getTileAt(startingWallTileX, y, true);
+        if (!tile.collides) {
+            unit.maxY = tile.pixelY - tile.width / 2;
+            break;
+        }
+    }
+}
+
 export function destroyUnit(unit: Unit) {
-    console.log("Unit destroy call on " + unit.id);
     unit.gameObj.destroy();
     unit.healthBarBackground.destroy();
     unit.healthBar.destroy();
@@ -178,7 +238,6 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
     // When the ship is overlapping multiple player units and is destroyed before the last one,
     // in the subsequent overlap calls it can be null.
     if (!unit1 || !unit2) {
-        console.log("Null unit, skipping this overlap");
         return;
     }
 

@@ -7,7 +7,7 @@ import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/R
 import { setResources, getResources, useResources } from "../state/ResourceState";
 
 let ship: Unit;
-let roomNum = 3;
+let roomNum = 1;
 let roomTarget: Unit; // Target the ship is trying to destroy
 let roomMap: Phaser.Tilemaps.Tilemap;
 let roomBlocks: Phaser.Tilemaps.TilemapLayer;
@@ -33,9 +33,7 @@ let shipSpawnSprite: Phaser.GameObjects.Image;
 let lastShipPos: Phaser.Math.Vector2;
 let lastTargetPos: Phaser.Math.Vector2;
 
-// Coordinates for placing crawler units in the room
-const crawlerMinTile = 1;
-const crawlerMaxTile = 17;
+const tileWidthPixels = 32;
 
 export class RoomScene extends Phaser.Scene {
     constructor() {
@@ -72,7 +70,7 @@ export class RoomScene extends Phaser.Scene {
         // Room tiles
         roomMap = this.make.tilemap({ key: room });
         const tileset = roomMap.addTilesetImage("OneBlock", "block");
-        roomBlocks = roomMap.createLayer(0, tileset);
+        roomBlocks = roomMap.createLayer("tiles", tileset);
         let navMeshLayer = roomMap.getObjectLayer("navmesh");
         roomBlocks.setCollisionByProperty({ collides: true });
 
@@ -174,15 +172,54 @@ export class RoomScene extends Phaser.Scene {
             //TODO handle other unit names that attach to walls
             let wall = null;
             if (sel.name == "crawler") {
-                if (tile.x == crawlerMinTile) {
-                    wall = 'W';
-                } else if (tile.x == crawlerMaxTile) {
-                    wall = 'E';
-                } else if (tile.y == crawlerMinTile) {
-                    wall = 'N';
-                } else if (tile.y == crawlerMaxTile) {
-                    wall = 'S';
-                } else {
+                // Check if the tile is a valid place to put a crawler
+                if (roomMap.getLayer("wallspawns").data[tile.y][tile.x].index == -1) {
+                    return false;
+                }
+
+                // Figure out which walls the crawler could attach to
+                //TODO will likely need to change if there are non-colliding blocks or
+                // blocks that collide but can't have crawlers in the future
+                let walls = [];
+                if (roomMap.layer.data[tile.y - 1][tile.x].index != -1) {
+                    walls.push('N');
+                }
+                if (roomMap.layer.data[tile.y][tile.x + 1].index != -1) {
+                    walls.push('E');
+                }
+                if (roomMap.layer.data[tile.y + 1][tile.x].index != -1) {
+                    walls.push('S');
+                }
+                if (roomMap.layer.data[tile.y][tile.x - 1].index != -1) {
+                    walls.push('W');
+                }
+
+                // Attach to the wall closest to the click
+                let wallDist = Number.MAX_SAFE_INTEGER;
+                walls.forEach(w => {
+                    let dist = Number.MAX_SAFE_INTEGER;
+                    switch (w) {
+                        case 'N':
+                            dist = position.y - tile.pixelY;
+                            break;
+                        case 'E':
+                            dist = tileWidthPixels - (position.x - tile.pixelX);
+                            break;
+                        case 'S':
+                            dist = tileWidthPixels - (position.y - tile.pixelY);
+                            break;
+                        case 'W':
+                            dist = position.x - tile.pixelX;
+                            break;
+                    }
+                    if (dist < wallDist) {
+                        wallDist = dist;
+                        wall = w;
+                    }
+                });
+
+                // If no wall is found somehow, can't place the unit
+                if (!wall) {
                     return false;
                 }
             }
@@ -190,7 +227,6 @@ export class RoomScene extends Phaser.Scene {
             let unit = createUnit(sel.name, { x: tile.getCenterX(), y: tile.getCenterY() }, this, wall);
             sceneUnits[unit.id] = unit;
             playerUnits.add(unit.gameObj);
-            console.log("using resources");
             useResources(sel.price);
             return true;
         }
