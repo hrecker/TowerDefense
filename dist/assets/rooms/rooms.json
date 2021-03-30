@@ -7,7 +7,8 @@
         "targetSpawn": {
             "x": 400,
             "y": 500
-        }
+        },
+        "reward": 150
     },
     "room2": {
         "shipSpawn": {
@@ -17,7 +18,8 @@
         "targetSpawn": {
             "x": 530,
             "y": 530
-        }
+        },
+        "reward": 200
     },
     "room3": {
         "shipSpawn": {
@@ -27,6 +29,7 @@
         "targetSpawn": {
             "x": 530,
             "y": 80
-        }
+        },
+        "reward": 250
     }
 }

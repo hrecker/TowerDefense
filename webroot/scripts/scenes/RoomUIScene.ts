@@ -123,14 +123,16 @@ export class RoomUIScene extends Phaser.Scene {
     }
 
     showInvalidUnitPlacement(reason: string, scene: Phaser.Scene) {
-        invalidPlacementText.setVisible(true);
-        invalidPlacementText.setText(reason);
-        if (invalidPlacementTextHideEvent) {
-            invalidPlacementTextHideEvent.remove();
+        if (reason != "") {
+            invalidPlacementText.setVisible(true);
+            invalidPlacementText.setText(reason);
+            if (invalidPlacementTextHideEvent) {
+                invalidPlacementTextHideEvent.remove();
+            }
+            // Hide after a couple seconds
+            invalidPlacementTextHideEvent = scene.time.delayedCall(3000, () => {
+                invalidPlacementText.setVisible(false);
+            });
         }
-        // Hide after a couple seconds
-        invalidPlacementTextHideEvent = scene.time.delayedCall(3000, () => {
-            invalidPlacementText.setVisible(false);
-        });
     }
 }

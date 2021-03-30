@@ -1,8 +1,8 @@
 let currentResources = 0;
 let currentResourcesCallbacks = [];
 
-export function useResources(used: number) {
-    setResources(currentResources - used);
+export function addResources(add: number) {
+    setResources(currentResources + add);
 }
 
 export function setResources(resources: number) {

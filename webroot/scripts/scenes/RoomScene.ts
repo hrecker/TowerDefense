@@ -4,13 +4,14 @@ import * as weapon from "../units/Weapon";
 import { Unit, createUnit, handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../model/Units";
 import { getShopSelection, setInvalidUnitPlacementReason } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
-import { setResources, getResources, useResources } from "../state/ResourceState";
+import { setResources, getResources, addResources } from "../state/ResourceState";
 
 let ship: Unit;
 let roomNum = 1;
 let roomTarget: Unit; // Target the ship is trying to destroy
 let roomMap: Phaser.Tilemaps.Tilemap;
 let roomBlocks: Phaser.Tilemaps.TilemapLayer;
+let roomReward: number;
 //let graphics;
 // Nav mesh for units to get around the current room
 let navMesh;
@@ -60,11 +61,13 @@ export class RoomScene extends Phaser.Scene {
         let roomJson = this.cache.json.get("rooms")[room];
         let shipSpawnPos = roomJson["shipSpawn"];
         let targetSpawnPos = roomJson["targetSpawn"];
+        roomReward = roomJson["reward"];
 
         setRoomStatus(RoomStatus.COUNTDOWN);
-        //TODO move this somewhere more appropriate, get resources from success in previous rooms
-        // Start with 200 resources
-        setResources(200);
+        if (roomNum == 1) {
+            // Start with 200 resources
+            setResources(200);
+        }
         //TODO varying setup time by room or floor
         timerRemainingMs = transitionTimeMs;
         setTimerMs(timerRemainingMs);
@@ -165,6 +168,11 @@ export class RoomScene extends Phaser.Scene {
     createUnitFromShopSelection(position: Phaser.Types.Math.Vector2Like) {
         let sel = getShopSelection();
         if (!sel) {
+            lastInvalidPlacementReason = "";
+            return false;
+        }
+        if (getRoomStatus() == RoomStatus.DEFEAT || getRoomStatus() == RoomStatus.VICTORY) {
+            lastInvalidPlacementReason = "Room is no longer active!";
             return false;
         }
         if (sel.price <= getResources()) {
@@ -236,7 +244,7 @@ export class RoomScene extends Phaser.Scene {
             let unit = createUnit(sel.name, { x: tile.getCenterX(), y: tile.getCenterY() }, this, wall);
             sceneUnits[unit.id] = unit;
             playerUnits.add(unit.gameObj);
-            useResources(sel.price);
+            addResources(-sel.price);
             return true;
         }
         lastInvalidPlacementReason = "Need more resources!";
@@ -281,8 +289,17 @@ export class RoomScene extends Phaser.Scene {
     handleRoomVictory() {
         setRoomStatus(RoomStatus.VICTORY);
         this.startRoomTransition();
-        //TODO better way to keep count of max room
+        //TODO better way to keep count of max rooms, probably will totally change when there are multiple "levels"
         roomNum = Math.min(roomNum + 1, 3);
+        // Add reward for room + half-rebate on units that are still living
+        let resourceBonus = roomReward;
+        Object.keys(sceneUnits).forEach(id => {
+            let unit: Unit = sceneUnits[id];
+            if (unit.playerOwned && unit.price) {
+                resourceBonus += unit.price / 2;
+            }
+        });
+        addResources(Math.floor(resourceBonus));
     }
 
     handleRoomDefeat() {
