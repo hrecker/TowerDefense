@@ -42,7 +42,7 @@
         "bodyType": "circle",
         "bodySize": 14,
         "bodyOffset": 2,
-        "weaponDelay": 500,
+        "weaponDelay": 1000,
         "playerOwned": true,
         "purchasable": true,
         "price": 50
@@ -50,13 +50,13 @@
     "crawler": {
         "name": "crawler",
         "movement": "crawler",
-        "maxSpeed": 300,
+        "maxSpeed": 150,
         "health": 2,
         "weapon": "straightShooter",
         "bodyType": "circle",
         "bodySize": 14,
         "bodyOffset": 2,
-        "weaponDelay": 1000,
+        "weaponDelay": 600,
         "playerOwned": true,
         "purchasable": true,
         "price": 75
