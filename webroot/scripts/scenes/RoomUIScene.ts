@@ -1,5 +1,5 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
-import { setShopSelection } from "../state/UIState";
+import { setShopSelection, addInvalidUnitPlacementListener } from "../state/UIState";
 import { addTimerMsListener, addRoomStatusListener, getRoomStatus, RoomStatus } from "../state/RoomState";
 import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
 
@@ -14,6 +14,8 @@ let purchasableUnits: Unit[];
 let currentResourcesText: Phaser.GameObjects.Text;
 let roomStatusText: Phaser.GameObjects.Text;
 let timerText: Phaser.GameObjects.Text;
+let invalidPlacementText: Phaser.GameObjects.Text;
+let invalidPlacementTextHideEvent: Phaser.Time.TimerEvent;
 
 // UI displayed over RoomScene
 export class RoomUIScene extends Phaser.Scene {
@@ -45,6 +47,11 @@ export class RoomUIScene extends Phaser.Scene {
         addTimerMsListener(this.updateTimerText, this);
         addRoomStatusListener(this.updateRoomStatus, this);
         this.updateRoomStatus(RoomStatus.COUNTDOWN);
+
+        invalidPlacementText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 250, "Invalid placement", { fontSize: "16px" }).setOrigin(0.5);
+        invalidPlacementText.setWordWrapWidth(unitSelectionBoxWidth - 20);
+        invalidPlacementText.setVisible(false);
+        addInvalidUnitPlacementListener(this.showInvalidUnitPlacement, this);
 
         purchasableUnits = getUnitsJsonProperties((unit) => unit.purchasable);
         shopSelectionBoxes = []
@@ -113,5 +120,17 @@ export class RoomUIScene extends Phaser.Scene {
                 roomStatusText.setText("Room defended!");
                 break;
         }
+    }
+
+    showInvalidUnitPlacement(reason: string, scene: Phaser.Scene) {
+        invalidPlacementText.setVisible(true);
+        invalidPlacementText.setText(reason);
+        if (invalidPlacementTextHideEvent) {
+            invalidPlacementTextHideEvent.remove();
+        }
+        // Hide after a couple seconds
+        invalidPlacementTextHideEvent = scene.time.delayedCall(3000, () => {
+            invalidPlacementText.setVisible(false);
+        });
     }
 }

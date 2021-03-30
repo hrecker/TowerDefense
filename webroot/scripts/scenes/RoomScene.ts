@@ -2,7 +2,7 @@ import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { Unit, createUnit, handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../model/Units";
-import { getShopSelection } from "../state/UIState";
+import { getShopSelection, setInvalidUnitPlacementReason } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
 import { setResources, getResources, useResources } from "../state/ResourceState";
 
@@ -24,6 +24,8 @@ let playerBulletsOverlap;
 let shipBulletsCollider;
 let shipBulletsOverlap;
 let unitOverlap;
+
+let lastInvalidPlacementReason: string = "";
 
 //TODO vary by room or level?
 const transitionTimeMs = 5000;
@@ -48,6 +50,7 @@ export class RoomScene extends Phaser.Scene {
         this.startRoom("room" + roomNum);
         this.input.on('pointerdown', (pointer) => {
             if (!this.createUnitFromShopSelection(pointer)) {
+                setInvalidUnitPlacementReason(lastInvalidPlacementReason);
                 console.log("Unable to place this unit here");
             }
         });
@@ -160,11 +163,15 @@ export class RoomScene extends Phaser.Scene {
     }
 
     createUnitFromShopSelection(position: Phaser.Types.Math.Vector2Like) {
-        let sel = getShopSelection()
-        if (sel && sel.price <= getResources()) {
+        let sel = getShopSelection();
+        if (!sel) {
+            return false;
+        }
+        if (sel.price <= getResources()) {
             // Make sure the position is valid
             let tile = roomMap.getTileAtWorldXY(position.x, position.y, true);
             if (tile && tile.collides) {
+                lastInvalidPlacementReason = "Can't place unit here!";
                 return false;
             }
 
@@ -174,6 +181,7 @@ export class RoomScene extends Phaser.Scene {
             if (sel.name == "crawler") {
                 // Check if the tile is a valid place to put a crawler
                 if (roomMap.getLayer("wallspawns").data[tile.y][tile.x].index == -1) {
+                    lastInvalidPlacementReason = "Crawlers must be adjacent to a wall!";
                     return false;
                 }
 
@@ -220,6 +228,7 @@ export class RoomScene extends Phaser.Scene {
 
                 // If no wall is found somehow, can't place the unit
                 if (!wall) {
+                    lastInvalidPlacementReason = "Can't determine where to place the crawler?!?!";
                     return false;
                 }
             }
@@ -230,6 +239,7 @@ export class RoomScene extends Phaser.Scene {
             useResources(sel.price);
             return true;
         }
+        lastInvalidPlacementReason = "Need more resources!";
         return false;
     }
 
