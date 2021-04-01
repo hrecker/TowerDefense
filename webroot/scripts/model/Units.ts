@@ -47,7 +47,37 @@ export type Unit = {
 
 /** Store unit json data for creating units */
 export function loadUnitJson(unitJson) {
-    unitCache = unitJson;
+    unitCache = {};
+    for (let name in unitJson) {
+        let unitProps = unitJson[name];
+        unitCache[name] = {
+            name: name,
+            id: -1,
+            movement: unitProps["movement"],
+            maxSpeed: unitProps["maxSpeed"],
+            maxAcceleration: unitProps["maxAcceleration"],
+            maxAngularSpeed: unitProps["maxAngularSpeed"],
+            minX: -1,
+            maxX: -1,
+            minY: -1,
+            maxY: -1,
+            rotation: unitProps["rotation"],
+            health: unitProps["health"],
+            maxHealth: unitProps["health"],
+            weapon: unitProps["weapon"],
+            weaponDelay: unitProps["weaponDelay"],
+            currentWeaponDelay: 0,
+            gameObj: null,
+            healthBarBackground: null,
+            healthBar: null,
+            path: null,
+            currentPathIndex: -1,
+            playerOwned: unitProps["playerOwned"],
+            purchasable: unitProps["purchasable"],
+            price: unitProps["price"],
+            timeSincePathfindMs: 10000 // Set to a high number so the unit doesn't wait for first pathfind
+        };
+    };
 }
 
 export function getUnitsJsonProperties(filter): Unit[] {
@@ -61,41 +91,15 @@ export function getUnitsJsonProperties(filter): Unit[] {
     return units;
 }
 
-/** Get a unit with property values defined in json, but don't actually create it in the scene. */
+/** Get a unit with property values defined in json, but don't actually create it in the scene.
+ *  This method deep-copies the Unit, so the returned Unit can be modified as needed.
+ */
 export function getUnitJsonProperties(name: string) : Unit {
-    let unitJson = unitCache[name];
-    if (!unitJson) {
+    let unitProps = unitCache[name];
+    if (!unitProps) {
         return null;
     }
-
-    //TODO cache this stuff rather than making a new Unit each time?
-    return {
-        name: name,
-        id: -1,
-        movement: unitJson["movement"],
-        maxSpeed: unitJson["maxSpeed"],
-        maxAcceleration: unitJson["maxAcceleration"],
-        maxAngularSpeed: unitJson["maxAngularSpeed"],
-        minX: -1,
-        maxX: -1,
-        minY: -1,
-        maxY: -1,
-        rotation: unitJson["rotation"],
-        health: unitJson["health"],
-        maxHealth: unitJson["health"],
-        weapon: unitJson["weapon"],
-        weaponDelay: unitJson["weaponDelay"],
-        currentWeaponDelay: 0,
-        gameObj: null,
-        healthBarBackground: null,
-        healthBar: null,
-        path: null,
-        currentPathIndex: -1,
-        playerOwned: unitJson["playerOwned"],
-        purchasable: unitJson["purchasable"],
-        price: unitJson["price"],
-        timeSincePathfindMs: 10000 // Set to a high number so the unit doesn't wait for first pathfind
-    };
+    return JSON.parse(JSON.stringify(unitProps));
 }
 
 /** Create a Phaser ImageWithDynamicBody for the unit defined with the given name in units.json */
