@@ -1,64 +1,64 @@
 {
     "ship": {
         "name": "ship",
+        "playerOwned": false,
         "movement": "homingLOS",
         "maxSpeed": 300,
         "maxAcceleration": 1000,
         "maxAngularSpeed": 0.1,
+        "rotation": true,
         "health": 10,
         "weapon": "peaShooter",
         "weaponDelay": 300,
+        "purchasable": false,
         "bodyType": "circle",
         "bodySize": 10,
-        "bodyOffset": 6,
-        "rotation": true,
-        "playerOwned": false,
-        "purchasable": false
+        "bodyOffset": 6
     },
     "target": {
         "name": "target",
-        "health": 10,
-        "bodySize": 24,
         "playerOwned": true,
-        "purchasable": false
+        "health": 10,
+        "purchasable": false,
+        "bodySize": 24
     },
     "chaser": {
         "name": "chaser",
+        "playerOwned": true,
         "movement": "homing",
         "maxSpeed": 100,
         "maxAcceleration": 500,
         "health": 5,
+        "purchasable": true,
+        "price": 25,
         "bodyType": "circle",
         "bodySize": 14,
-        "bodyOffset": 2,
-        "playerOwned": true,
-        "purchasable": true,
-        "price": 25
+        "bodyOffset": 2
     },
     "turret": {
         "name": "turret",
+        "playerOwned": true,
         "health": 3,
         "weapon": "peaShooter",
+        "weaponDelay": 1000,
+        "purchasable": true,
+        "price": 50,
         "bodyType": "circle",
         "bodySize": 14,
-        "bodyOffset": 2,
-        "weaponDelay": 1000,
-        "playerOwned": true,
-        "purchasable": true,
-        "price": 50
+        "bodyOffset": 2
     },
     "crawler": {
         "name": "crawler",
+        "playerOwned": true,
         "movement": "crawler",
         "maxSpeed": 150,
         "health": 2,
         "weapon": "straightShooter",
+        "weaponDelay": 600,
+        "purchasable": true,
+        "price": 75,
         "bodyType": "circle",
         "bodySize": 14,
-        "bodyOffset": 2,
-        "weaponDelay": 600,
-        "playerOwned": true,
-        "purchasable": true,
-        "price": 75
+        "bodyOffset": 2
     }
 }
