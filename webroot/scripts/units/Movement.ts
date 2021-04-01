@@ -1,4 +1,5 @@
 import { Unit, healthBarYPos } from "../model/Units";
+import { tileWidthPixels } from "../scenes/RoomScene";
 
 let activeNavmesh;
 
@@ -260,4 +261,51 @@ function moveCrawlerUnit(unit: Unit, target: Phaser.Math.Vector2, wall: string) 
             }
             break;
     }
+}
+
+/** Find which wall a crawler unit should attach to when placed */
+export function findCrawlerWall(roomMap: Phaser.Tilemaps.Tilemap, tile: Phaser.Tilemaps.Tile, 
+        position: Phaser.Types.Math.Vector2Like): string {
+    // Figure out which walls the crawler could attach to
+    //TODO will likely need to change if there are non-colliding blocks or
+    // blocks that collide but can't have crawlers in the future
+    let walls = [];
+    if (roomMap.layer.data[tile.y - 1][tile.x].index != -1) {
+        walls.push('N');
+    }
+    if (roomMap.layer.data[tile.y][tile.x + 1].index != -1) {
+        walls.push('E');
+    }
+    if (roomMap.layer.data[tile.y + 1][tile.x].index != -1) {
+        walls.push('S');
+    }
+    if (roomMap.layer.data[tile.y][tile.x - 1].index != -1) {
+        walls.push('W');
+    }
+
+    // Attach to the wall closest to the click
+    let wallDist = Number.MAX_SAFE_INTEGER;
+    let wall;
+    walls.forEach(w => {
+        let dist = Number.MAX_SAFE_INTEGER;
+        switch (w) {
+            case 'N':
+                dist = position.y - tile.pixelY;
+                break;
+            case 'E':
+                dist = tileWidthPixels - (position.x - tile.pixelX);
+                break;
+            case 'S':
+                dist = tileWidthPixels - (position.y - tile.pixelY);
+                break;
+            case 'W':
+                dist = position.x - tile.pixelX;
+                break;
+        }
+        if (dist < wallDist) {
+            wallDist = dist;
+            wall = w;
+        }
+    });
+    return wall;
 }

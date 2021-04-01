@@ -1,4 +1,4 @@
-import { Unit, handleProjectileHit } from "../model/Units";
+import { Unit } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 
 export const projectileNames = ["playerBullet", "shipBullet"];

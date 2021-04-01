@@ -1,6 +1,6 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
 import { setShopSelection, addInvalidUnitPlacementListener } from "../state/UIState";
-import { addTimerMsListener, addRoomStatusListener, getRoomStatus, RoomStatus } from "../state/RoomState";
+import { addTimerMsListener, addRoomStatusListener, RoomStatus } from "../state/RoomState";
 import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
 
 const unitSelectionBoxWidth = 192;
@@ -30,7 +30,6 @@ export class RoomUIScene extends Phaser.Scene {
     }
 
     create() {
-        console.log("RoomUIScene starting");
         let shopBackground = this.add.rectangle(unitSelectionCenterX, this.game.renderer.height / 2, 
             unitSelectionBoxWidth, this.game.renderer.height, 0x000000);
         shopBackground.setInteractive();

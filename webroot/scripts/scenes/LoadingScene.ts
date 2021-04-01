@@ -30,7 +30,6 @@ export class LoadingScene extends Phaser.Scene {
     }
 
     create() {
-        console.log("Loading scene starting, asset loading complete");
         loadUnitJson(this.cache.json.get("units"));
         this.scene.start("RoomScene")
                   .start("RoomUIScene")

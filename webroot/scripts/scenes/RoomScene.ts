@@ -1,7 +1,8 @@
 import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
-import { Unit, createUnit, handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../model/Units";
+import { handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../units/Collision";
+import { Unit, createUnit} from "../model/Units";
 import { getShopSelection, setInvalidUnitPlacementReason } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
@@ -36,7 +37,7 @@ let shipSpawnSprite: Phaser.GameObjects.Image;
 let lastShipPos: Phaser.Math.Vector2;
 let lastTargetPos: Phaser.Math.Vector2;
 
-const tileWidthPixels = 32;
+export const tileWidthPixels = 32;
 
 export class RoomScene extends Phaser.Scene {
     constructor() {
@@ -46,13 +47,11 @@ export class RoomScene extends Phaser.Scene {
     }
 
     create() {
-        console.log("RoomScene starting");
         this.cameras.main.setBackgroundColor(backgroundColor);
         this.startRoom("room" + roomNum);
         this.input.on('pointerdown', (pointer) => {
             if (!this.createUnitFromShopSelection(pointer)) {
                 setInvalidUnitPlacementReason(lastInvalidPlacementReason);
-                console.log("Unable to place this unit here");
             }
         });
     }
@@ -192,51 +191,10 @@ export class RoomScene extends Phaser.Scene {
                     lastInvalidPlacementReason = "Crawlers must be adjacent to a wall!";
                     return false;
                 }
-
-                // Figure out which walls the crawler could attach to
-                //TODO will likely need to change if there are non-colliding blocks or
-                // blocks that collide but can't have crawlers in the future
-                let walls = [];
-                if (roomMap.layer.data[tile.y - 1][tile.x].index != -1) {
-                    walls.push('N');
-                }
-                if (roomMap.layer.data[tile.y][tile.x + 1].index != -1) {
-                    walls.push('E');
-                }
-                if (roomMap.layer.data[tile.y + 1][tile.x].index != -1) {
-                    walls.push('S');
-                }
-                if (roomMap.layer.data[tile.y][tile.x - 1].index != -1) {
-                    walls.push('W');
-                }
-
-                // Attach to the wall closest to the click
-                let wallDist = Number.MAX_SAFE_INTEGER;
-                walls.forEach(w => {
-                    let dist = Number.MAX_SAFE_INTEGER;
-                    switch (w) {
-                        case 'N':
-                            dist = position.y - tile.pixelY;
-                            break;
-                        case 'E':
-                            dist = tileWidthPixels - (position.x - tile.pixelX);
-                            break;
-                        case 'S':
-                            dist = tileWidthPixels - (position.y - tile.pixelY);
-                            break;
-                        case 'W':
-                            dist = position.x - tile.pixelX;
-                            break;
-                    }
-                    if (dist < wallDist) {
-                        wallDist = dist;
-                        wall = w;
-                    }
-                });
-
+                wall = move.findCrawlerWall(roomMap, tile, position);
                 // If no wall is found somehow, can't place the unit
                 if (!wall) {
-                    lastInvalidPlacementReason = "Can't determine where to place the crawler?!?!";
+                    lastInvalidPlacementReason = "SHOULDN'T HAPPEN: Can't determine where to place the crawler!";
                     return false;
                 }
             }
@@ -315,6 +273,25 @@ export class RoomScene extends Phaser.Scene {
         });
     }
 
+    getUnitTarget(unit): Phaser.Math.Vector2 {
+        let targetUnit: Unit;
+        if (unit.playerOwned) {
+            targetUnit = ship;
+        } else if (roomTarget.gameObj.body) {
+            targetUnit = roomTarget;
+        }
+        let target;
+        if (targetUnit && targetUnit.gameObj.body) {
+            target = targetUnit.gameObj.body.center;
+        } else if (unit.playerOwned) {
+            target = lastShipPos;
+        } else {
+            target = lastTargetPos;
+        }
+        
+        return target;
+    }
+
     update(time, delta) {
         if (timerRemainingMs > 0) {
             // Counting down until ship spawns/next room starts
@@ -340,7 +317,6 @@ export class RoomScene extends Phaser.Scene {
             Object.keys(sceneUnits).forEach(id => {
                 if (!sceneUnits[id].gameObj.body) {
                     let name = sceneUnits[id].name;
-                    console.log("Deleting unit " + name);
                     delete sceneUnits[id];
                     // Reload room on victory/failure
                     //TODO maintain resources between rooms in some way
@@ -368,24 +344,5 @@ export class RoomScene extends Phaser.Scene {
                 lastTargetPos = roomTarget.gameObj.body.center.clone();
             }
         }
-    }
-
-    getUnitTarget(unit): Phaser.Math.Vector2 {
-        let targetUnit: Unit;
-        if (unit.playerOwned) {
-            targetUnit = ship;
-        } else if (roomTarget.gameObj.body) {
-            targetUnit = roomTarget;
-        }
-        let target;
-        if (targetUnit && targetUnit.gameObj.body) {
-            target = targetUnit.gameObj.body.center;
-        } else if (unit.playerOwned) {
-            target = lastShipPos;
-        } else {
-            target = lastTargetPos;
-        }
-        
-        return target;
     }
 }
