@@ -18,6 +18,7 @@ export class LoadingScene extends Phaser.Scene {
         this.load.image("shipBullet", "assets/sprites/shipBullet.png");
         this.load.image("target", "assets/sprites/target.png");
         this.load.image("block", "assets/sprites/block.png");
+        this.load.image("shield", "assets/sprites/shield.png");
 
         // Load room tilemaps
         this.load.json("rooms", "assets/rooms/rooms.json");

@@ -1,7 +1,11 @@
 import { RoomScene } from "../scenes/RoomScene";
+import { Mod, ModType } from "./Mods";
+import { flickerGameObject } from "../util/Util";
 
 let unitCache: { [name: string]: Unit };
 let unitId = 0;
+// Index for attached gameobjects not associated with a mod
+const nullModId = -1;
 
 const healthBarWidth = 64;
 const healthBarHeight = 6;
@@ -30,7 +34,6 @@ export type Unit = {
     // Health props
     health: number;
     maxHealth: number;
-    healthBarBackground: Phaser.GameObjects.Rectangle;
     healthBar: Phaser.GameObjects.Rectangle;
     // Weapon props
     weapon: string;
@@ -39,6 +42,13 @@ export type Unit = {
     // Shop props
     purchasable: boolean;
     price: number;
+    // Mods
+    // Lists of mods indexed by ModType
+    mods: { [type: string]: Mod[] };
+    // Any gameobject attached to this unit (attached gameobjects will track with
+    // this unit's movement). If created by a mod, they will be indexed by modId.
+    // Otherwise they will be stored under index nullModId (-1).
+    attachedObjects: { [modId: number]: Phaser.GameObjects.GameObject[] }
 }
 
 /** Store unit json data for creating units */
@@ -46,6 +56,8 @@ export function loadUnitJson(unitJson) {
     unitCache = {};
     for (let name in unitJson) {
         let unitProps = unitJson[name];
+        let attached = {};
+        attached[nullModId] = [];
         unitCache[name] = {
             name: name,
             id: -1,
@@ -64,14 +76,15 @@ export function loadUnitJson(unitJson) {
             weaponDelay: unitProps["weaponDelay"],
             currentWeaponDelay: 0,
             gameObj: null,
-            healthBarBackground: null,
             healthBar: null,
             path: null,
             currentPathIndex: -1,
             playerOwned: unitProps["playerOwned"],
             purchasable: unitProps["purchasable"],
             price: unitProps["price"],
-            timeSincePathfindMs: 10000 // Set to a high number so the unit doesn't wait for first pathfind
+            timeSincePathfindMs: 10000, // Set to a high number so the unit doesn't wait for first pathfind
+            mods: {},
+            attachedObjects: attached
         };
     };
 }
@@ -95,6 +108,7 @@ export function getUnitJsonProperties(name: string) : Unit {
     if (!unitProps) {
         return null;
     }
+    //TODO ensure this is sufficient - if not, try lodash.deepcopy module
     return JSON.parse(JSON.stringify(unitProps));
 }
 
@@ -118,10 +132,13 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
     }
 
     // Create the Unit's health bar
-    unit.healthBarBackground = scene.add.rectangle(location.x, location.y - healthBarYPos,
-        healthBarWidth + 2, healthBarHeight + 2, 0, 0.5);
-    unit.healthBar = scene.add.rectangle(location.x, location.y - healthBarYPos,
-        healthBarWidth, healthBarHeight, healthBarFillColor, 0.5);
+    let healthBarBackground = scene.add.rectangle(location.x, location.y,
+        healthBarWidth + 2, healthBarHeight + 2, 0, 0.5).setDisplayOrigin(healthBarWidth / 2 + 1, healthBarYPos + 1);
+    unit.healthBar = scene.add.rectangle(location.x, location.y,
+        healthBarWidth, healthBarHeight, healthBarFillColor, 0.5).setDisplayOrigin(healthBarWidth / 2, healthBarYPos);
+
+    unit.attachedObjects[nullModId].push(healthBarBackground);
+    unit.attachedObjects[nullModId].push(unit.healthBar);
 
     if (unit.movement == "crawler") {
         unit.movement = "crawler" + crawlerWall;
@@ -198,12 +215,33 @@ function setMinMaxY(unit: Unit, startingWallTileX: number, startingTileY: number
 
 export function destroyUnit(unit: Unit) {
     unit.gameObj.destroy();
-    unit.healthBarBackground.destroy();
-    unit.healthBar.destroy();
+    Object.keys(unit.attachedObjects).forEach(modId => {
+        unit.attachedObjects[modId].forEach(attached => {
+            attached.destroy();
+        });
+    });
 }
 
 /** Cause the unit to take a certain amount of damage, and destroy it if health reaches zero. */
 export function takeDamage(unit: Unit, damage: number) {
+    // Apply any shield mods
+    if (unit.mods[ModType.SHIELD]) {
+        unit.mods[ModType.SHIELD].forEach(mod => {
+            if (mod.props.shieldStrength > 0) {
+                damage -= mod.props.shieldStrength;
+                // Flash the shield itself for visual feedback
+                if (unit.attachedObjects[mod.id]) {
+                    unit.attachedObjects[mod.id].forEach(attached => {
+                        flickerGameObject(unit.gameObj.scene, attached as unknown as Phaser.GameObjects.Components.Tint);
+                    });
+                }
+            }
+        });
+    }
+    if (damage <= 0) {
+        return;
+    }
+
     unit.health -= damage;
     if (unit.health <= 0) {
         destroyUnit(unit);
@@ -213,15 +251,6 @@ export function takeDamage(unit: Unit, damage: number) {
         unit.healthBar.setSize(barWidth, healthBarHeight);
 
         // Flash on taking hit for some visual feedback
-        unit.gameObj.scene.tweens.addCounter({
-            from: 50,
-            to: 255,
-            duration: 200,
-            onUpdate: function (tween)
-            {
-                const value = Math.floor(tween.getValue());
-                unit.gameObj.setTint(Phaser.Display.Color.GetColor(value, value, value));
-            }
-        });
+        flickerGameObject(unit.gameObj.scene, unit.gameObj);
     }
 }

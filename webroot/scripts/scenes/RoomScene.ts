@@ -3,6 +3,7 @@ import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../units/Collision";
 import { Unit, createUnit} from "../model/Units";
+import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
 import { getShopSelection, setInvalidUnitPlacementReason } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
@@ -36,6 +37,8 @@ let shipSpawnSprite: Phaser.GameObjects.Image;
 
 let lastShipPos: Phaser.Math.Vector2;
 let lastTargetPos: Phaser.Math.Vector2;
+
+let sceneTime = 0;
 
 export const tileWidthPixels = 32;
 
@@ -158,6 +161,9 @@ export class RoomScene extends Phaser.Scene {
     spawnShipUnit() {
         shipSpawnSprite.destroy();
         ship = createUnit("ship", shipSpawnSprite.getCenter(), this);
+        // Add a 1-second "infinitely" strong shield so the player can't always cheese the ship by
+        // dumping a bunch of units on the spawn point
+        createUnitMod(ship, ModType.SHIELD, { duration: 1000, shieldStrength: 10000, attachSprite: "shield" }, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
@@ -236,6 +242,10 @@ export class RoomScene extends Phaser.Scene {
         return sceneUnits[id];
     }
 
+    getSceneTime() {
+        return sceneTime;
+    }
+
     // Prevent any further unit damage from bullets in the scene
     startRoomTransition() {
         this.physics.world.removeCollider(playerBulletsOverlap);
@@ -293,6 +303,7 @@ export class RoomScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        sceneTime += delta;
         if (timerRemainingMs > 0) {
             // Counting down until ship spawns/next room starts
             timerRemainingMs -= delta;
@@ -329,6 +340,10 @@ export class RoomScene extends Phaser.Scene {
                     }
                 }
             });
+
+            // Remove mods that have expired
+            purgeExpiredMods(sceneTime);
+
             // Movement
             this.moveUnits(delta);
 

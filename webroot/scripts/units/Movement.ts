@@ -37,7 +37,7 @@ export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phase
 
     clampUnitSpeed(unit);
     clampUnitPosition(unit);
-    trackUnitHealthBar(unit);
+    trackAttachedGameObjects(unit);
 }
 
 /** How close a unit needs to be before it has officially "made it" to a node on a path */
@@ -158,9 +158,15 @@ function clampUnitPosition(unit: Unit) {
     }
 }
 
-function trackUnitHealthBar(unit: Unit) {
-    unit.healthBar.setPosition(unit.gameObj.body.center.x, unit.gameObj.body.center.y - healthBarYPos);
-    unit.healthBarBackground.setPosition(unit.gameObj.body.center.x, unit.gameObj.body.center.y - healthBarYPos);
+/** Match the unit's movement for any GameObjects attached to it. */
+function trackAttachedGameObjects(unit: Unit) {
+    Object.keys(unit.attachedObjects).forEach(modId => {
+        unit.attachedObjects[modId].forEach(attached => {
+            // Assume that the GameObject has a Transform component
+            (attached as unknown as Phaser.GameObjects.Components.Transform).setPosition(
+                    unit.gameObj.body.center.x, unit.gameObj.body.center.y);
+        });
+    });
 }
 
 /** Generate a path for the unit to follow to the target using the room's navmesh */
