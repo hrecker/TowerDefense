@@ -2,7 +2,7 @@ import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../units/Collision";
-import { Unit, createUnit} from "../model/Units";
+import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
 import { getShopSelection, setInvalidUnitPlacementReason } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
@@ -32,6 +32,7 @@ let lastInvalidPlacementReason: string = "";
 
 //TODO vary by room or level?
 const transitionTimeMs = 5000;
+const roomTimeLimitMs = 60000;
 let timerRemainingMs;
 let shipSpawnSprite: Phaser.GameObjects.Image;
 
@@ -305,7 +306,7 @@ export class RoomScene extends Phaser.Scene {
     update(time, delta) {
         sceneTime += delta;
         if (timerRemainingMs > 0) {
-            // Counting down until ship spawns/next room starts
+            // Counting down until ship spawns/next room starts/player wins by default
             timerRemainingMs -= delta;
             if (timerRemainingMs < 0) {
                 timerRemainingMs = 0;
@@ -315,6 +316,11 @@ export class RoomScene extends Phaser.Scene {
                 switch (getRoomStatus()) {
                     case RoomStatus.COUNTDOWN:
                         this.spawnShipUnit();
+                        timerRemainingMs = roomTimeLimitMs;
+                        break;
+                    case RoomStatus.ACTIVE:
+                        // After room time limit ends, ship self-destructs
+                        destroyUnit(ship);
                         break;
                     case RoomStatus.DEFEAT:
                     case RoomStatus.VICTORY:
