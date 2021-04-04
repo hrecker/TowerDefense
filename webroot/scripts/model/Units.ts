@@ -126,6 +126,7 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
     unitId++;
     unitImage.setData("id", unitId);
     unitImage.setName(name);
+    unitImage.setData("playerOwned", unit.playerOwned);
     if (unitJson["bodyType"] == "circle") {
         unitImage.body.setCircle(unitJson["bodySize"], unitJson["bodyOffset"], unitJson["bodyOffset"]);
     } else { // Default to square

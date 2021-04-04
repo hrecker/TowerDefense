@@ -28,13 +28,19 @@ export type ModProps = {
     // Sprites that should be attached to the unit while this mod is active
     attachSprite?: string,
     // properties for specific mod types:
+    // Generic (may be used by multiple mod types)
+    currentCooldownMs?: number
     // ModType.SHIELD
-    shieldStrength?: number
+    shieldStrength?: number,
+    // ModType.DODGE_ENEMIES
+    dodgeCooldownMs?: number,
+    dodgeSpeed?: number
 }
 
 /** Types of Mods that can be created */
 export enum ModType {
-    SHIELD = "SHIELD"
+    SHIELD = "SHIELD",
+    DODGE_ENEMIES = "DODGE_ENEMIES"
 };
 
 /** Create a Mod attached to a Unit. The passed in mod should

@@ -1,5 +1,6 @@
+import { Mod, ModType } from "../model/Mods";
 import { Unit, healthBarYPos } from "../model/Units";
-import { tileWidthPixels } from "../scenes/RoomScene";
+import { RoomScene, tileWidthPixels } from "../scenes/RoomScene";
 
 let activeNavmesh;
 
@@ -8,8 +9,22 @@ export function setRoomNavmesh(navmesh) {
 }
 
 /** Move a unit for one frame (call each frame in the update method of a scene) */
-export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phaser.Tilemaps.Tilemap, delta: number, debugGraphics: Phaser.GameObjects.Graphics) {
+export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phaser.Tilemaps.Tilemap, roomScene: RoomScene, delta: number, debugGraphics: Phaser.GameObjects.Graphics) {
     if (target) {
+        // Apply movement mods
+        if (unit.mods[ModType.DODGE_ENEMIES]) {
+            //TODO probably shouldn't even be possible to have multiple DODGE_ENEMIES mods...
+            //TODO maybe some kind of assert that prevents duplicates for certain mod types?
+            unit.mods[ModType.DODGE_ENEMIES].forEach(mod => {
+                if (mod.props.currentCooldownMs > 0) {
+                    mod.props.currentCooldownMs -= delta;
+                } else if (dodgeNearestEnemy(unit, mod, roomScene)) {
+                    console.log("Dodged");
+                    mod.props.currentCooldownMs = mod.props.dodgeCooldownMs;
+                }
+            });
+        }
+
         switch (unit.movement) {
             case "homingLOS":
                 //TODO could check line of sight before this, a bit more efficient
@@ -310,4 +325,29 @@ export function findCrawlerWall(roomMap: Phaser.Tilemaps.Tilemap, tile: Phaser.T
         }
     });
     return wall;
+}
+
+const dodgeRadius = 50;
+/** Check for nearby enemies and apply some dodge velocity if any are found*/
+function dodgeNearestEnemy(unit: Unit, dodgeMod: Mod, roomScene: RoomScene): boolean {
+    let nearby = roomScene.physics.overlapCirc(unit.gameObj.body.center.x, unit.gameObj.body.center.y, dodgeRadius);
+    // Always expect 1 nearby unit for the ship itself
+    if (nearby.length > 1) {
+        for (let i = 0; i < nearby.length; i++) {
+            let body = nearby[i];
+            if (body.gameObject.getData("playerOwned") != undefined && unit.playerOwned != body.gameObject.getData("playerOwned") && 
+                    !body.velocity.equals(Phaser.Math.Vector2.ZERO)) {
+                let dodgeVel = body.velocity.clone().normalize().scale(dodgeMod.props.dodgeSpeed);
+                // Randomly choose dodge direction - perpendicular to velocity of what is being dodged
+                if (Math.random() < 0.5) {
+                    dodgeVel.normalizeLeftHand();
+                } else {
+                    dodgeVel.normalizeRightHand();
+                }
+                unit.gameObj.setVelocity(dodgeVel.x, dodgeVel.y);
+                return true;
+            }
+        }
+    }
+    return false;
 }

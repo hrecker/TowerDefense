@@ -31,7 +31,7 @@ let unitOverlap;
 let lastInvalidPlacementReason: string = "";
 
 //TODO vary by room or level?
-const transitionTimeMs = 5000;
+const transitionTimeMs = 2000;
 const roomTimeLimitMs = 60000;
 let timerRemainingMs;
 let shipSpawnSprite: Phaser.GameObjects.Image;
@@ -174,6 +174,8 @@ export class RoomScene extends Phaser.Scene {
         // Add a 1-second "infinitely" strong shield so the player can't always cheese the ship by
         // dumping a bunch of units on the spawn point
         createUnitMod(ship, ModType.SHIELD, { duration: 1000, shieldStrength: 10000, attachSprite: "shield" }, this);
+        // Ship avoids enemies
+        createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
@@ -289,7 +291,7 @@ export class RoomScene extends Phaser.Scene {
     moveUnits(delta) {
         Object.keys(sceneUnits).forEach(id => {
             // Pass in graphics for some debugging (the arcade physics debug property must be set to true)
-            move.moveUnit(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), roomMap, delta, null /*graphics*/);
+            move.moveUnit(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), roomMap, this, delta, null /*graphics*/);
         });
     }
 

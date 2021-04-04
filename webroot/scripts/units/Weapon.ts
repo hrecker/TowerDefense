@@ -43,6 +43,7 @@ function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector
     bulletGroup.add(bullet);
     bullet.setData("isBullet", true);
     bullet.setData("id", bulletId);
+    bullet.setData("playerOwned", unit.playerOwned);
     //TODO any worry about hitting max int here...?
     bulletId++;
     //TODO different body sizes for different bullets
