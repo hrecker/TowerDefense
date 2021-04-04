@@ -11,6 +11,7 @@ const healthBarWidth = 64;
 const healthBarHeight = 6;
 export const healthBarYPos = 24;
 const healthBarFillColor = 0x32a852;
+const defaultUnitDrag = 500;
 
 /** A Unit in the active room */
 export type Unit = {
@@ -130,6 +131,7 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
     } else { // Default to square
         unitImage.setBodySize(unitJson["bodySize"], unitJson["bodySize"]);
     }
+    unitImage.setDrag(defaultUnitDrag);
 
     // Create the Unit's health bar
     let healthBarBackground = scene.add.rectangle(location.x, location.y,

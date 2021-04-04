@@ -60,6 +60,14 @@ export class RoomScene extends Phaser.Scene {
         });
     }
 
+    // Create a physics group for units that does not reset drag when adding to the group
+    createUnitPhysicsGroup() {
+        let group = this.physics.add.group();
+        delete group.defaults.setDragX;
+        delete group.defaults.setDragY;
+        return group;
+    }
+
     startRoom(room: string) {
         let roomJson = this.cache.json.get("rooms")[room];
         let shipSpawnPos = roomJson["shipSpawn"];
@@ -103,8 +111,9 @@ export class RoomScene extends Phaser.Scene {
         roomTarget = createUnit("target", targetSpawnPos, this);
         sceneUnits[roomTarget.id] = roomTarget;
 
-        playerUnits = this.physics.add.group(roomTarget.gameObj);
-        shipUnits = this.physics.add.group();
+        playerUnits = this.createUnitPhysicsGroup();
+        playerUnits.add(roomTarget.gameObj);
+        shipUnits = this.createUnitPhysicsGroup();
 
         if (playerBullets) {
             playerBullets.destroy(true);

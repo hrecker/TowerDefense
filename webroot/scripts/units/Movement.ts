@@ -119,11 +119,7 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilema
     // If the unit only needs line of sight and it has it, don't need to move any more
     if (onlyNeedLOS && checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1], roomMap, debugGraphics)) {
         unit.gameObj.setAcceleration(0);
-        // Once the target is visible, allow drag to slow the unit down more naturally
-        unit.gameObj.setDrag(500);
         return;
-    } else {
-        unit.gameObj.setDrag(0);
     }
 
     // Accelerate towards the target
