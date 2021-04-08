@@ -19,7 +19,6 @@ export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phase
                 if (mod.props.currentCooldownMs > 0) {
                     mod.props.currentCooldownMs -= delta;
                 } else if (dodgeNearestEnemy(unit, mod, roomScene)) {
-                    console.log("Dodged");
                     mod.props.currentCooldownMs = mod.props.dodgeCooldownMs;
                 }
             });

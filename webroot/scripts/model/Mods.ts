@@ -71,7 +71,6 @@ export function createUnitMod(unit: Unit, type: ModType, props: ModProps, scene:
         unit.mods[type] = [];
     }
     unit.mods[type].push(mod);
-    console.log("Created mod " + modId + " with type " + type + " for unit " + unit.id);
 }
 
 /** Destroy mods that expired based on the current time */
@@ -88,7 +87,6 @@ export function purgeExpiredMods(time: number) {
 /** Destroy mod, remove from unit and destroy GameObjects if necessary */
 //TODO handle mods not attached to units here (global/semi-global)
 export function destroyMod(mod: Mod) {
-    console.log("Destroying mod " + modId + " with type " + mod.type + " for unit " + mod.unit.id);
     // Remove the mod from the unit's list
     //TODO remove the type key from unit.mods if there are no more of the given type? Probably doesn't matter
     for (let i = 0; i < mod.unit.mods[mod.type].length; i++) {

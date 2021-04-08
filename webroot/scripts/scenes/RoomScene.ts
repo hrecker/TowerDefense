@@ -5,7 +5,7 @@ import { handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../unit
 import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
-import { getShopSelection, setInvalidUnitPlacementReason } from "../state/UIState";
+import { addShopSelectionListener, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
 
@@ -30,6 +30,7 @@ let shipBulletsOverlap;
 let unitOverlap;
 
 let lastInvalidPlacementReason: string = "";
+let shopSelectionHover: Phaser.GameObjects.Image;
 
 //TODO vary by room or level?
 const transitionTimeMs = 2000;
@@ -54,8 +55,14 @@ export class RoomScene extends Phaser.Scene {
     create() {
         this.cameras.main.setBackgroundColor(backgroundColor);
         this.startRoom("room" + roomNum);
+        shopSelectionHover = this.add.image(-1000, -1000, "target");
+        shopSelectionHover.setAlpha(0.5);
+        addShopSelectionListener(this.updateShopSelectionHover, this);
+        this.updateShopSelectionHover(getShopSelection());
         this.input.on('pointerdown', (pointer) => {
-            if (!this.createUnitFromShopSelection(pointer)) {
+            if (this.canPlaceShopSelection(pointer)) {
+                this.createUnitFromShopSelection(pointer);
+            } else {
                 setInvalidUnitPlacementReason(lastInvalidPlacementReason);
             }
         });
@@ -185,7 +192,7 @@ export class RoomScene extends Phaser.Scene {
         setRoomStatus(RoomStatus.ACTIVE);
     }
 
-    createUnitFromShopSelection(position: Phaser.Types.Math.Vector2Like) {
+    canPlaceShopSelection(position: Phaser.Types.Math.Vector2Like) {
         let sel = getShopSelection();
         if (!sel) {
             lastInvalidPlacementReason = "";
@@ -198,36 +205,44 @@ export class RoomScene extends Phaser.Scene {
         if (sel.price <= getResources()) {
             // Make sure the position is valid
             let tile = roomMap.getTileAtWorldXY(position.x, position.y, true);
-            if (tile && tile.collides) {
+            if (!tile || (tile && tile.collides)) {
                 lastInvalidPlacementReason = "Can't place unit here!";
                 return false;
             }
 
-            // Snap crawlers to wall and orient them correctly
+            // Check if the tile is a valid place to put a crawler
             //TODO handle other unit names that attach to walls
-            let wall = null;
             if (sel.name == "crawler") {
-                // Check if the tile is a valid place to put a crawler
                 if (roomMap.getLayer("wallspawns").data[tile.y][tile.x].index == -1) {
                     lastInvalidPlacementReason = "Crawlers must be adjacent to a wall!";
                     return false;
                 }
-                wall = move.findCrawlerWall(roomMap, tile, position);
-                // If no wall is found somehow, can't place the unit
-                if (!wall) {
-                    lastInvalidPlacementReason = "SHOULDN'T HAPPEN: Can't determine where to place the crawler!";
-                    return false;
-                }
             }
-
-            let unit = createUnit(sel.name, { x: tile.getCenterX(), y: tile.getCenterY() }, this, wall);
-            sceneUnits[unit.id] = unit;
-            playerUnits.add(unit.gameObj);
-            addResources(-sel.price);
             return true;
         }
         lastInvalidPlacementReason = "Need more resources!";
         return false;
+    }
+
+    createUnitFromShopSelection(position: Phaser.Types.Math.Vector2Like) {
+        let sel = getShopSelection();
+        let tile = roomMap.getTileAtWorldXY(position.x, position.y, true);
+        let wall = null;
+        // Crawlers snap to nearest wall
+        //TODO handle other unit names that attach to walls
+        if (sel.name == "crawler") {
+            wall = move.findCrawlerWall(roomMap, tile, position);
+        }
+        let unit = createUnit(sel.name, { x: tile.getCenterX(), y: tile.getCenterY() }, this, wall);
+        sceneUnits[unit.id] = unit;
+        playerUnits.add(unit.gameObj);
+        addResources(-sel.price);
+    }
+
+    updateShopSelectionHover(selection: Unit) {
+        if (selection) {
+            shopSelectionHover.setTexture(selection.name)
+        }
     }
 
     getSceneUnits() {
@@ -381,5 +396,36 @@ export class RoomScene extends Phaser.Scene {
                 lastTargetPos = roomTarget.gameObj.body.center.clone();
             }
         }
+
+        // Show preview of shop selection
+        let visible = false;
+        if (this.canPlaceShopSelection(this.input.activePointer)) {
+            let tile = roomMap.getTileAtWorldXY(this.input.activePointer.x, this.input.activePointer.y, true);
+            if (tile) {
+                visible = true;
+                shopSelectionHover.setPosition(tile.getCenterX(), tile.getCenterY());
+                //TODO handle other units that attach to walls
+                if (getShopSelection().name == "crawler") {
+                    let wall = move.findCrawlerWall(roomMap, tile, this.input.activePointer);
+                    switch (wall) {
+                        case 'W':
+                            shopSelectionHover.setRotation(0);
+                            break;
+                        case 'N':
+                            shopSelectionHover.setRotation(Math.PI / 2);
+                            break;
+                        case 'E':
+                            shopSelectionHover.setRotation(Math.PI);
+                            break;
+                        case 'S':
+                            shopSelectionHover.setRotation(3 * Math.PI / 2);
+                            break;
+                    }
+                } else {
+                    shopSelectionHover.setRotation(0);
+                }
+            }
+        } 
+        shopSelectionHover.setVisible(visible);
     }
 }
