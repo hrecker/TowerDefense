@@ -2,6 +2,7 @@ import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
 import { handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../units/Collision";
+import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
 import { getShopSelection, setInvalidUnitPlacementReason } from "../state/UIState";
@@ -176,6 +177,8 @@ export class RoomScene extends Phaser.Scene {
         createUnitMod(ship, ModType.SHIELD, { duration: 1000, shieldStrength: 10000, attachSprite: "shield" }, this);
         // Ship avoids enemies
         createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
+        // Ship targets enemies
+        createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
@@ -225,6 +228,26 @@ export class RoomScene extends Phaser.Scene {
         }
         lastInvalidPlacementReason = "Need more resources!";
         return false;
+    }
+
+    getSceneUnits() {
+        return sceneUnits;
+    }
+
+    getShip() {
+        return ship;
+    }
+
+    getRoomTarget() {
+        return roomTarget;
+    }
+
+    getLastShipPos() {
+        return lastShipPos;
+    }
+
+    getLastTargetPos() {
+        return lastTargetPos;
     }
 
     getShipUnits() {
@@ -291,28 +314,10 @@ export class RoomScene extends Phaser.Scene {
     moveUnits(delta) {
         Object.keys(sceneUnits).forEach(id => {
             // Pass in graphics for some debugging (the arcade physics debug property must be set to true)
-            move.moveUnit(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), roomMap, this, delta, null /*graphics*/);
+            move.moveUnit(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), roomMap, this, delta, null /*graphics*/);
         });
     }
-
-    getUnitTarget(unit): Phaser.Math.Vector2 {
-        let targetUnit: Unit;
-        if (unit.playerOwned) {
-            targetUnit = ship;
-        } else if (roomTarget.gameObj.body) {
-            targetUnit = roomTarget;
-        }
-        let target;
-        if (targetUnit && targetUnit.gameObj.body) {
-            target = targetUnit.gameObj.body.center;
-        } else if (unit.playerOwned) {
-            target = lastShipPos;
-        } else {
-            target = lastTargetPos;
-        }
-        
-        return target;
-    }
+    
 
     update(time, delta) {
         sceneTime += delta;
@@ -367,7 +372,7 @@ export class RoomScene extends Phaser.Scene {
             if (getRoomStatus() == RoomStatus.ACTIVE) {
                 // Weapons
                 Object.keys(sceneUnits).forEach(id => {
-                    weapon.updateUnitWeapon(sceneUnits[id], this.getUnitTarget(sceneUnits[id]), delta, this);
+                    weapon.updateUnitWeapon(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), delta, this);
                 });
                 // Track units overlapping for dealing damage
                 updateFrameOverlaps();
