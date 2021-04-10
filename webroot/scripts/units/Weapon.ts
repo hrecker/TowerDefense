@@ -1,4 +1,5 @@
-import { Unit } from "../model/Units";
+import { ModType } from "../model/Mods";
+import { hasMod, Unit } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 
 export const projectileNames = ["playerBullet", "shipBullet"];
@@ -49,6 +50,9 @@ function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector
     //TODO different body sizes for different bullets
     bullet.body.setCircle(8);
     bullet.setName(bulletName);
+    if (hasMod(unit, ModType.PROJECTILE_SCALE)) {
+        bullet.setScale(unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale);
+    }
     let bulletVel = target.clone().subtract(unit.gameObj.body.center).normalize().scale(bulletSpeed);
     bullet.setVelocity(bulletVel.x, bulletVel.y);
     // Destroy bullet after enough time passes for it to go off screen, just in case something weird happens

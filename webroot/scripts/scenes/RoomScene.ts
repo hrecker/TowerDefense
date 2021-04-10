@@ -15,7 +15,8 @@ let roomTarget: Unit; // Target the ship is trying to destroy
 let roomMap: Phaser.Tilemaps.Tilemap;
 let roomBlocks: Phaser.Tilemaps.TilemapLayer;
 let roomReward: number;
-//let graphics;
+//TODO remove in prod build
+let graphics;
 // Nav mesh for units to get around the current room
 let navMesh;
 let sceneUnits: { [id: number]: Unit } = {};
@@ -90,7 +91,7 @@ export class RoomScene extends Phaser.Scene {
         //TODO varying setup time by room or floor
         timerRemainingMs = transitionTimeMs;
         setTimerMs(timerRemainingMs);
-        //graphics = this.add.graphics();
+        graphics = this.add.graphics();
 
         // Room tiles
         roomMap = this.make.tilemap({ key: room });
@@ -186,6 +187,8 @@ export class RoomScene extends Phaser.Scene {
         createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
         // Ship targets enemies
         createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
+        // Ship has scaled bullets
+        createUnitMod(ship, ModType.PROJECTILE_SCALE, { projectileScale: 1.8 }, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
@@ -329,7 +332,7 @@ export class RoomScene extends Phaser.Scene {
     moveUnits(delta) {
         Object.keys(sceneUnits).forEach(id => {
             // Pass in graphics for some debugging (the arcade physics debug property must be set to true)
-            move.moveUnit(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), roomMap, this, delta, null /*graphics*/);
+            move.moveUnit(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), roomMap, this, delta, graphics);
         });
     }
     

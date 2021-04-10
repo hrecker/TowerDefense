@@ -228,7 +228,7 @@ export function destroyUnit(unit: Unit) {
 /** Cause the unit to take a certain amount of damage, and destroy it if health reaches zero. */
 export function takeDamage(unit: Unit, damage: number) {
     // Apply any shield mods
-    if (unit.mods[ModType.SHIELD]) {
+    if (hasMod(unit, ModType.SHIELD)) {
         unit.mods[ModType.SHIELD].forEach(mod => {
             if (mod.props.shieldStrength > 0) {
                 damage -= mod.props.shieldStrength;
@@ -256,4 +256,9 @@ export function takeDamage(unit: Unit, damage: number) {
         // Flash on taking hit for some visual feedback
         flickerGameObject(unit.gameObj.scene, unit.gameObj);
     }
+}
+
+/** Check if unit has an active mod of the given type */
+export function hasMod(unit: Unit, type: ModType): boolean {
+    return unit.mods[type] && unit.mods[type].length > 0;
 }

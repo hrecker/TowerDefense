@@ -1,4 +1,4 @@
-import { Unit } from "../model/Units";
+import { hasMod, Unit } from "../model/Units";
 import { ModType } from "../model/Mods";
 import { RoomScene } from "../scenes/RoomScene";
 
@@ -9,7 +9,7 @@ export function getUnitTarget(unit: Unit, roomScene: RoomScene): Phaser.Math.Vec
     if (unit.playerOwned) {
         targetUnit = roomScene.getShip();
     } else {
-        if (unit.mods[ModType.TARGET_ENEMIES] && unit.mods[ModType.TARGET_ENEMIES].length > 0) {
+        if (hasMod(unit, ModType.TARGET_ENEMIES)) {
             let targetId = unit.mods[ModType.TARGET_ENEMIES][0].props.currentTargetId;
             let targetValid = targetId != -1;
             // Check if old target is no longer valid

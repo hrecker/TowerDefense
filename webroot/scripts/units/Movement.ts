@@ -1,5 +1,5 @@
 import { Mod, ModType } from "../model/Mods";
-import { Unit, healthBarYPos } from "../model/Units";
+import { Unit, healthBarYPos, hasMod } from "../model/Units";
 import { RoomScene, tileWidthPixels } from "../scenes/RoomScene";
 
 let activeNavmesh;
@@ -12,7 +12,7 @@ export function setRoomNavmesh(navmesh) {
 export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phaser.Tilemaps.Tilemap, roomScene: RoomScene, delta: number, debugGraphics: Phaser.GameObjects.Graphics) {
     if (target) {
         // Apply movement mods
-        if (unit.mods[ModType.DODGE_ENEMIES]) {
+        if (hasMod(unit, ModType.DODGE_ENEMIES)) {
             //TODO probably shouldn't even be possible to have multiple DODGE_ENEMIES mods...
             //TODO maybe some kind of assert that prevents duplicates for certain mod types?
             unit.mods[ModType.DODGE_ENEMIES].forEach(mod => {
@@ -58,14 +58,26 @@ export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phase
 const pathDistanceCheck = 16;
 
 //TODO make variable depending on unit/weapon
-const lineOfSightWidth = 20;
+const defaultLineOfSightWidth = 20;
 
 /** How often to redo pathfinding logic for homing units */
 const pathfindIntervalMs = 500;
 
+/** Width necessary for line of sight depends on weapon - unit wants to be able to shoot
+ * at whatever it's looking at, bigger bullets need more space to avoid hitting obstacles.
+ */
+export function determineLineOfSightWidth(unit: Unit) {
+    let los = defaultLineOfSightWidth;
+    //TODO handle different weapon/mod types
+    if (hasMod(unit, ModType.PROJECTILE_SCALE)) {
+        los *= unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale;
+    }
+    return los;
+}
+
 /** Check if the origin can see the target in the current room. Return true if line of sight is free. */
 export function checkLineOfSight(origin: Phaser.Types.Math.Vector2Like, target: Phaser.Types.Math.Vector2Like,
-    roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
+    lineOfSightWidth: number, roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
     // Create 3 lines from near center of origin to near center of target, to ensure space for firing weapons
     let targetVector = new Phaser.Math.Vector2(target).subtract(new Phaser.Math.Vector2(origin));
     let left = targetVector.clone().normalizeLeftHand().setLength(lineOfSightWidth / 2);
@@ -131,7 +143,8 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilema
     }
 
     // If the unit only needs line of sight and it has it, don't need to move any more
-    if (onlyNeedLOS && checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1], roomMap, debugGraphics)) {
+    if (onlyNeedLOS && checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1], 
+            determineLineOfSightWidth(unit), roomMap, debugGraphics)) {
         unit.gameObj.setAcceleration(0);
         return;
     }

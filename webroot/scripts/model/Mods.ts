@@ -36,14 +36,17 @@ export type ModProps = {
     dodgeCooldownMs?: number,
     dodgeSpeed?: number,
     // ModType.TARGET_ENEMIES
-    currentTargetId?: number
+    currentTargetId?: number,
+    // ModType.PROJECTILE_SCALE
+    projectileScale?: number
 }
 
 /** Types of Mods that can be created */
 export enum ModType {
     SHIELD = "SHIELD",
     DODGE_ENEMIES = "DODGE_ENEMIES",
-    TARGET_ENEMIES = "TARGET_ENEMIES"
+    TARGET_ENEMIES = "TARGET_ENEMIES",
+    PROJECTILE_SCALE = "PROJECTILE_SCALE"
 };
 
 /** Create a Mod attached to a Unit. The passed in mod should
