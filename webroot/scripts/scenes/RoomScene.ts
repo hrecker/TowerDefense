@@ -187,8 +187,6 @@ export class RoomScene extends Phaser.Scene {
         createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
         // Ship targets enemies
         createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
-        // Ship has scaled bullets
-        createUnitMod(ship, ModType.PROJECTILE_SCALE, { projectileScale: 1.8 }, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);

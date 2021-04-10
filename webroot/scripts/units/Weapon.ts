@@ -6,33 +6,39 @@ export const projectileNames = ["playerBullet", "shipBullet"];
 //TODO make this modifiable in some way?
 const bulletSpeed = 100;
 const bulletLifetimeMs = 10000;
+const shotgunSpreadRadians = 1.0;
 
 /** Update weapon control for a unit for one frame (call each frame in the update method of a scene) */
 export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta: number, scene: RoomScene) {
     if (unit.currentWeaponDelay > 0) {
         unit.currentWeaponDelay -= delta;
     } else if (target) {
-        //TODO different weapons
+        let targets = [];
         switch (unit.weapon) {
             case "peaShooter":
-                if (unit.playerOwned) {
-                    firePlayerBullet(unit, target, scene);
-                } else {
-                    fireShipBullet(unit, target, scene);
-                }
+                targets.push(target);
                 break;
             case "straightShooter":
-                if (unit.playerOwned) {
-                    firePlayerBullet(unit,
-                        unit.gameObj.body.center.clone().add(
-                            Phaser.Math.Vector2.RIGHT.clone().rotate(unit.gameObj.rotation)), scene);
-                } else {
-                    fireShipBullet(unit,
-                        unit.gameObj.body.center.clone().add(
-                            Phaser.Math.Vector2.RIGHT.clone().rotate(unit.gameObj.rotation)), scene);
+                targets.push(unit.gameObj.body.center.clone().add(
+                    Phaser.Math.Vector2.RIGHT.clone().rotate(unit.gameObj.rotation)));
+                break;
+            case "shotgun":
+                let targetVector = target.clone().subtract(unit.gameObj.body.center);
+                //TODO mods for number of projectiles
+                for (let i = 0; i < 3; i++) {
+                    // Rotate the target vector a random amount for some bullet spread
+                    let randomRot = Math.random() * shotgunSpreadRadians - shotgunSpreadRadians / 2;
+                    targets.push(targetVector.clone().rotate(randomRot).add(unit.gameObj.body.center));
                 }
                 break;
         }
+        targets.forEach(target => {
+            if (unit.playerOwned) {
+                firePlayerBullet(unit, target, scene);
+            } else {
+                fireShipBullet(unit, target, scene);
+            }
+        });
         unit.currentWeaponDelay = unit.weaponDelay;
     }
 }
