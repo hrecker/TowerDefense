@@ -9,7 +9,7 @@
         "rotation": true,
         "health": 10,
         "weapon": "shotgun",
-        "weaponDelay": 300,
+        "weaponDelay": 1500,
         "purchasable": false,
         "bodyType": "circle",
         "bodySize": 10,
@@ -45,7 +45,10 @@
         "price": 50,
         "bodyType": "circle",
         "bodySize": 14,
-        "bodyOffset": 2
+        "bodyOffset": 2,
+        "defaultMods": {
+            "EXPLODING_PROJECTILES": {}
+        }
     },
     "crawler": {
         "name": "crawler",

@@ -141,7 +141,7 @@ export class RoomScene extends Phaser.Scene {
             this.physics.world.removeCollider(projectilesRoomCollider);
         }
         //TODO create a separate group for objects that should be destroyed on hitting geometry, to allow for bullets that pass through
-        //TODO for bouncing bullets, just use a mod that removes the destroy line in these colliders. Could add a unitId to bullets to check the mod.
+        //TODO for bouncing bullets, just use a mod that removes the destroy line in these colliders.
         projectilesRoomCollider = this.physics.add.collider(projectiles, this.getRoomBlocks(), handleProjectileHitGeometry, null, this);
         
         // Handle bullet hit on units
@@ -175,6 +175,7 @@ export class RoomScene extends Phaser.Scene {
         createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
         // Ship targets enemies
         createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
+        createUnitMod(ship, ModType.EXPLODING_PROJECTILES, null, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);

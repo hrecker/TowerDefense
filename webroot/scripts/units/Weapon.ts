@@ -1,11 +1,13 @@
 import { ModType } from "../model/Mods";
 import { hasMod, Unit } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
+import { getNewId } from "../state/IdState";
 
-export const projectileNames = ["playerBullet", "shipBullet"];
+export const projectileNames = ["playerBullet", "shipBullet", "playerExplosion", "shipExplosion"];
 //TODO make this modifiable in some way?
 const bulletSpeed = 100;
 const bulletLifetimeMs = 10000;
+const explosionLifetimeMs = 1200;
 const shotgunSpreadRadians = 1.0;
 
 /** Update weapon control for a unit for one frame (call each frame in the update method of a scene) */
@@ -43,7 +45,6 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
     }
 }
 
-let bulletId = 0;
 function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene, bulletGroup: Phaser.Physics.Arcade.Group) {
     //TODO object pool for bullets rather than destroying them and creating new ones?
     let bullet = scene.physics.add.image(unit.gameObj.body.center.x, unit.gameObj.body.center.y, bulletName);
@@ -52,12 +53,12 @@ function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector
     if (!hasMod(unit, ModType.GHOST_PROJECTILES)) {
         scene.getProjectileGroup().add(bullet);
     }
-    //bulletGroup.add(bullet);
+    if (hasMod(unit, ModType.EXPLODING_PROJECTILES)) {
+        bullet.setData("exploding", true);
+    }
     bullet.setData("isBullet", true);
-    bullet.setData("id", bulletId);
+    bullet.setData("id", getNewId());
     bullet.setData("playerOwned", unit.playerOwned);
-    //TODO any worry about hitting max int here...?
-    bulletId++;
     bullet.body.setCircle(8);
     bullet.setName(bulletName);
     if (hasMod(unit, ModType.PROJECTILE_SCALE)) {
@@ -76,4 +77,25 @@ function firePlayerBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomSc
 
 function fireShipBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
     createBullet("shipBullet", unit, target, scene, scene.getShipBulletGroup());
+}
+
+export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene) {
+    let bulletGroup = scene.getPlayerBulletGroup();
+    let explosionName = "playerExplosion";
+    if (!playerOwned) {
+        bulletGroup = scene.getShipBulletGroup();
+        explosionName = "shipExplosion";
+    }
+
+    let explosion = scene.physics.add.image(position.x, position.y, explosionName);
+    bulletGroup.add(explosion);
+    explosion.setData("isAOE", true);
+    explosion.setData("id", getNewId());
+    explosion.setData("playerOwned", playerOwned);
+    explosion.setAlpha(0.3);
+    explosion.body.setCircle(32);
+    explosion.setName(explosionName);
+    // Destroy explosion after some time passes
+    scene.time.delayedCall(explosionLifetimeMs, () => explosion.destroy());
+    return explosion;
 }

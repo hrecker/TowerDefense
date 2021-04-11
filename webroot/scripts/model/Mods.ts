@@ -1,7 +1,7 @@
 import { RoomScene } from "../scenes/RoomScene";
+import { getNewId } from "../state/IdState";
 import { Unit } from "./Units";
 
-let modId = 0;
 // All active mods that have a duration
 let allTimebasedMods: Mod[] = [];
 
@@ -47,7 +47,8 @@ export enum ModType {
     DODGE_ENEMIES = "DODGE_ENEMIES",
     TARGET_ENEMIES = "TARGET_ENEMIES",
     PROJECTILE_SCALE = "PROJECTILE_SCALE",
-    GHOST_PROJECTILES = "GHOST_PROJECTILES"
+    GHOST_PROJECTILES = "GHOST_PROJECTILES",
+    EXPLODING_PROJECTILES = "EXPLODING_PROJECTILES"
 };
 
 /** Create a Mod attached to a Unit. The passed in mod should
@@ -55,12 +56,11 @@ export enum ModType {
  * connect it to the unit and instantiate necessary GameObjects.
  */
 export function createUnitMod(unit: Unit, type: ModType, props: ModProps, scene: RoomScene) {
-    modId++;
     if (!props) {
         props = {};
     }
     let mod: Mod = {
-        id: modId,
+        id: getNewId(),
         unit: unit,
         startTime: scene.getSceneTime(),
         type: type,

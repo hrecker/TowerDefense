@@ -1,9 +1,9 @@
 import { RoomScene } from "../scenes/RoomScene";
 import { createUnitMod, Mod, ModProps, ModType } from "./Mods";
 import { flickerGameObject } from "../util/Util";
+import { getNewId } from "../state/IdState";
 
 let unitCache: { [name: string]: Unit };
-let unitId = 0;
 // Index for attached gameobjects not associated with a mod
 const nullModId = -1;
 
@@ -126,7 +126,7 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
 
     // Create the actual Phaser ImageWithDynamicBody
     let unitImage = scene.physics.add.image(location.x, location.y, name);
-    unitId++;
+    let unitId = getNewId();
     unitImage.setData("id", unitId);
     unitImage.setName(name);
     unitImage.setData("playerOwned", unit.playerOwned);
