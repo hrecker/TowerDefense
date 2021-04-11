@@ -59,6 +59,9 @@
         "price": 75,
         "bodyType": "circle",
         "bodySize": 14,
-        "bodyOffset": 2
+        "bodyOffset": 2,
+        "defaultMods": {
+            "GHOST_PROJECTILES": {}
+        }
     }
 }

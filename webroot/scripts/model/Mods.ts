@@ -46,7 +46,8 @@ export enum ModType {
     SHIELD = "SHIELD",
     DODGE_ENEMIES = "DODGE_ENEMIES",
     TARGET_ENEMIES = "TARGET_ENEMIES",
-    PROJECTILE_SCALE = "PROJECTILE_SCALE"
+    PROJECTILE_SCALE = "PROJECTILE_SCALE",
+    GHOST_PROJECTILES = "GHOST_PROJECTILES"
 };
 
 /** Create a Mod attached to a Unit. The passed in mod should
@@ -55,6 +56,9 @@ export enum ModType {
  */
 export function createUnitMod(unit: Unit, type: ModType, props: ModProps, scene: RoomScene) {
     modId++;
+    if (!props) {
+        props = {};
+    }
     let mod: Mod = {
         id: modId,
         unit: unit,

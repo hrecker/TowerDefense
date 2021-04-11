@@ -1,5 +1,5 @@
 import { RoomScene } from "../scenes/RoomScene";
-import { Mod, ModType } from "./Mods";
+import { createUnitMod, Mod, ModProps, ModType } from "./Mods";
 import { flickerGameObject } from "../util/Util";
 
 let unitCache: { [name: string]: Unit };
@@ -44,6 +44,8 @@ export type Unit = {
     purchasable: boolean;
     price: number;
     // Mods
+    // Default mods that should be added when spawning this unit
+    defaultMods: { [type: string]: ModProps };
     // Lists of mods indexed by ModType
     mods: { [type: string]: Mod[] };
     // Any gameobject attached to this unit (attached gameobjects will track with
@@ -84,6 +86,7 @@ export function loadUnitJson(unitJson) {
             purchasable: unitProps["purchasable"],
             price: unitProps["price"],
             timeSincePathfindMs: 10000, // Set to a high number so the unit doesn't wait for first pathfind
+            defaultMods: unitProps["defaultMods"],
             mods: {},
             attachedObjects: attached
         };
@@ -169,6 +172,14 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
 
     unit.id = unitId;
     unit.gameObj = unitImage;
+
+    // Create any default mods for the unit
+    if (unit.defaultMods) {
+        Object.keys(unit.defaultMods).forEach(type => {
+            createUnitMod(unit, ModType[type], unit.defaultMods[type], scene);
+        });
+    }
+
     return unit;
 }
 

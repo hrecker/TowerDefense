@@ -57,7 +57,7 @@ export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phase
 /** How close a unit needs to be before it has officially "made it" to a node on a path */
 const pathDistanceCheck = 16;
 
-//TODO make variable depending on unit/weapon
+/** How wide a rectangle to check for valid line of sight for a unit */
 const defaultLineOfSightWidth = 20;
 
 /** How often to redo pathfinding logic for homing units */
@@ -142,9 +142,11 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilema
         unit.gameObj.setRotation(Phaser.Math.Angle.RotateTo(unit.gameObj.rotation, angleBetween, unit.maxAngularSpeed));
     }
 
-    // If the unit only needs line of sight and it has it, don't need to move any more
-    if (onlyNeedLOS && checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1], 
-            determineLineOfSightWidth(unit), roomMap, debugGraphics)) {
+    // If the unit only needs line of sight and it has it, don't need to move any more.
+    // Ghost projectiles mean the unit essentially always has line of sight.
+    if (onlyNeedLOS && (hasMod(unit, ModType.GHOST_PROJECTILES) ||
+            checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1],
+            determineLineOfSightWidth(unit), roomMap, debugGraphics))) {
         unit.gameObj.setAcceleration(0);
         return;
     }

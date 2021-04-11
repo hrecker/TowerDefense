@@ -1,7 +1,7 @@
 import { backgroundColor } from "../util/Util";
 import * as move from "../units/Movement";
 import * as weapon from "../units/Weapon";
-import { handleUnitHit, handleProjectileHit, updateFrameOverlaps } from "../units/Collision";
+import { handleUnitHit, handleProjectileHit, updateFrameOverlaps, handleProjectileHitGeometry } from "../units/Collision";
 import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
@@ -24,9 +24,9 @@ let playerUnits: Phaser.Physics.Arcade.Group;
 let shipUnits: Phaser.Physics.Arcade.Group;
 let playerBullets: Phaser.Physics.Arcade.Group;
 let shipBullets: Phaser.Physics.Arcade.Group;
-let playerBulletsCollider;
+let projectiles: Phaser.Physics.Arcade.Group;
+let projectilesRoomCollider;
 let playerBulletsOverlap;
-let shipBulletsCollider;
 let shipBulletsOverlap;
 let unitOverlap;
 
@@ -88,7 +88,6 @@ export class RoomScene extends Phaser.Scene {
             // Start with 200 resources
             setResources(200);
         }
-        //TODO varying setup time by room or floor
         timerRemainingMs = transitionTimeMs;
         setTimerMs(timerRemainingMs);
         graphics = this.add.graphics();
@@ -132,31 +131,20 @@ export class RoomScene extends Phaser.Scene {
             shipBullets.destroy(true);
         }
         shipBullets = this.physics.add.group();
+        if (projectiles) {
+            projectiles.destroy(true);
+        }
+        projectiles = this.physics.add.group();
+
+        // Handle projectiles hitting geometry
+        if (projectilesRoomCollider) {
+            this.physics.world.removeCollider(projectilesRoomCollider);
+        }
+        //TODO create a separate group for objects that should be destroyed on hitting geometry, to allow for bullets that pass through
+        //TODO for bouncing bullets, just use a mod that removes the destroy line in these colliders. Could add a unitId to bullets to check the mod.
+        projectilesRoomCollider = this.physics.add.collider(projectiles, this.getRoomBlocks(), handleProjectileHitGeometry, null, this);
         
-        // Destroy bullets on touching geometry
-        if (playerBulletsCollider) {
-            this.physics.world.removeCollider(playerBulletsCollider);
-        }
-        playerBulletsCollider = this.physics.add.collider(playerBullets, this.getRoomBlocks(), (obj1, obj2) => {
-            // In these callbacks, tilemap doesn't seem to have the getData function, so have to check for it
-            let bullet = obj2;
-            if (typeof obj1.getData === "function" && obj1.getData("isBullet")) {
-                bullet = obj1;
-            }
-            bullet.destroy();
-        });
-        if (shipBulletsCollider) {
-            this.physics.world.removeCollider(shipBulletsCollider);
-        }
-        shipBulletsCollider = this.physics.add.collider(shipBullets, this.getRoomBlocks(), (obj1, obj2) => {
-            // In these callbacks, tilemap doesn't seem to have the getData function, so have to check for it
-            let bullet = obj2;
-            if (typeof obj1.getData === "function" && obj1.getData("isBullet")) {
-                bullet = obj1;
-            }
-            bullet.destroy();
-        });
-        // Handle bullet hit on target
+        // Handle bullet hit on units
         playerBulletsOverlap = this.physics.add.overlap(playerBullets, this.getShipUnits(), handleProjectileHit, null, this);
         shipBulletsOverlap = this.physics.add.overlap(shipBullets, this.getPlayerUnits(), handleProjectileHit, null, this);
 
@@ -282,6 +270,10 @@ export class RoomScene extends Phaser.Scene {
         return playerBullets;
     }
 
+    getProjectileGroup() {
+        return projectiles;
+    }
+
     getRoomBlocks() {
         return roomBlocks;
     }
@@ -368,7 +360,6 @@ export class RoomScene extends Phaser.Scene {
                     let name = sceneUnits[id].name;
                     delete sceneUnits[id];
                     // Reload room on victory/failure
-                    //TODO maintain resources between rooms in some way
                     if (name == "ship") {
                         setRoomStatus(RoomStatus.VICTORY);
                         this.handleRoomVictory();
