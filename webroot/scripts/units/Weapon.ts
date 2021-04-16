@@ -33,6 +33,9 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
                     targets.push(targetVector.clone().rotate(randomRot).add(unit.gameObj.body.center));
                 }
                 break;
+            case "zapper":
+                createExplosion(unit.playerOwned, unit.gameObj.body.center, scene, "zapperExplosion", explosionLifetimeMs / 2);
+                break;
         }
         targets.forEach(target => {
             if (unit.playerOwned) {
@@ -79,12 +82,16 @@ function fireShipBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScen
     createBullet("shipBullet", unit, target, scene, scene.getShipBulletGroup());
 }
 
-export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene) {
+export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene, explosionName?: string, lifetimeMs?: number) {
     let bulletGroup = scene.getPlayerBulletGroup();
-    let explosionName = "playerExplosion";
+    if (!explosionName) {
+        explosionName = "playerExplosion";
+    }
     if (!playerOwned) {
         bulletGroup = scene.getShipBulletGroup();
-        explosionName = "shipExplosion";
+        if (!explosionName) {
+            explosionName = "shipExplosion";
+        }
     }
 
     let explosion = scene.physics.add.image(position.x, position.y, explosionName);
@@ -96,6 +103,9 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
     explosion.body.setCircle(32);
     explosion.setName(explosionName);
     // Destroy explosion after some time passes
-    scene.time.delayedCall(explosionLifetimeMs, () => explosion.destroy());
+    if (!lifetimeMs) {
+        lifetimeMs = explosionLifetimeMs;
+    }
+    scene.time.delayedCall(lifetimeMs, () => explosion.destroy());
     return explosion;
 }

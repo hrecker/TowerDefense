@@ -32,6 +32,18 @@
         "bodySize": 14,
         "bodyOffset": 2
     },
+    "zapper": {
+        "name": "zapper",
+        "weapon": "zapper",
+        "weaponDelay": 1000,
+        "playerOwned": true,
+        "health": 5,
+        "purchasable": true,
+        "price": 40,
+        "bodyType": "circle",
+        "bodySize": 14,
+        "bodyOffset": 2
+    },
     "chaser": {
         "name": "chaser",
         "playerOwned": true,
