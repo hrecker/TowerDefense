@@ -22,6 +22,16 @@
         "purchasable": false,
         "bodySize": 24
     },
+    "spikeball": {
+        "name": "spikeball",
+        "playerOwned": true,
+        "health": 3,
+        "purchasable": true,
+        "price": 25,
+        "bodyType": "circle",
+        "bodySize": 14,
+        "bodyOffset": 2
+    },
     "chaser": {
         "name": "chaser",
         "playerOwned": true,
