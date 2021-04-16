@@ -83,11 +83,13 @@ function fireShipBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScen
 }
 
 export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene, explosionName?: string, lifetimeMs?: number) {
-    let bulletGroup = scene.getPlayerBulletGroup();
-    if (!explosionName) {
-        explosionName = "playerExplosion";
-    }
-    if (!playerOwned) {
+    let bulletGroup;
+    if (playerOwned) {
+        bulletGroup = scene.getPlayerBulletGroup();
+        if (!explosionName) {
+            explosionName = "playerExplosion";
+        }
+    } else {
         bulletGroup = scene.getShipBulletGroup();
         if (!explosionName) {
             explosionName = "shipExplosion";
