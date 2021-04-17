@@ -2,8 +2,8 @@ import { hasMod, Unit } from "../model/Units";
 import { ModType } from "../model/Mods";
 import { RoomScene } from "../scenes/RoomScene";
 
-// Get the appropriate unit for the provided unit to target in the room
-export function getUnitTarget(unit: Unit, roomScene: RoomScene): Phaser.Math.Vector2 {
+// Get the appropriate unit for the provided unit to target in the room, or null if no target unit is around
+export function getUnitTarget(unit: Unit, roomScene: RoomScene): Unit {
     let targetUnit: Unit;
     let sceneUnits = roomScene.getSceneUnits();
     if (unit.playerOwned) {
@@ -35,7 +35,11 @@ export function getUnitTarget(unit: Unit, roomScene: RoomScene): Phaser.Math.Vec
             targetUnit = roomScene.getRoomTarget();
         }
     }
+    return targetUnit;
+}
 
+// Get the position the unit should target
+export function getTargetPos(unit: Unit, targetUnit: Unit, roomScene: RoomScene) {
     let target;
     if (targetUnit && targetUnit.gameObj.body) {
         target = targetUnit.gameObj.body.center;
@@ -44,6 +48,5 @@ export function getUnitTarget(unit: Unit, roomScene: RoomScene): Phaser.Math.Vec
     } else {
         target = roomScene.getLastTargetPos();
     }
-    
     return target;
 }

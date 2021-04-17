@@ -175,7 +175,7 @@ export class RoomScene extends Phaser.Scene {
         createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
         // Ship targets enemies
         createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
-        createUnitMod(ship, ModType.EXPLODING_PROJECTILES, null, this);
+        //createUnitMod(ship, ModType.EXPLODING_PROJECTILES, null, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);
@@ -275,6 +275,10 @@ export class RoomScene extends Phaser.Scene {
         return projectiles;
     }
 
+    getRoomMap() {
+        return roomMap;
+    }
+
     getRoomBlocks() {
         return roomBlocks;
     }
@@ -323,7 +327,7 @@ export class RoomScene extends Phaser.Scene {
     moveUnits(delta) {
         Object.keys(sceneUnits).forEach(id => {
             // Pass in graphics for some debugging (the arcade physics debug property must be set to true)
-            move.moveUnit(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), roomMap, this, delta, graphics);
+            move.moveUnit(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), this, delta, graphics);
         });
     }
     
@@ -380,7 +384,7 @@ export class RoomScene extends Phaser.Scene {
             if (getRoomStatus() == RoomStatus.ACTIVE) {
                 // Weapons
                 Object.keys(sceneUnits).forEach(id => {
-                    weapon.updateUnitWeapon(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), delta, this);
+                    weapon.updateUnitWeapon(sceneUnits[id], ai.getTargetPos(sceneUnits[id], ai.getUnitTarget(sceneUnits[id], this), this), delta, this);
                 });
                 // Track units overlapping for dealing damage
                 updateFrameOverlaps();

@@ -1,6 +1,7 @@
 import { Mod, ModType } from "../model/Mods";
-import { Unit, healthBarYPos, hasMod } from "../model/Units";
+import { Unit, hasMod } from "../model/Units";
 import { RoomScene, tileWidthPixels } from "../scenes/RoomScene";
+import { getTargetPos } from "./AI";
 
 let activeNavmesh;
 
@@ -9,7 +10,13 @@ export function setRoomNavmesh(navmesh) {
 }
 
 /** Move a unit for one frame (call each frame in the update method of a scene) */
-export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phaser.Tilemaps.Tilemap, roomScene: RoomScene, delta: number, debugGraphics: Phaser.GameObjects.Graphics) {
+export function moveUnit(unit: Unit, targetUnit: Unit, roomScene: RoomScene, delta: number, debugGraphics: Phaser.GameObjects.Graphics) {
+    let target = getTargetPos(unit, targetUnit, roomScene);
+    let targetId = -1;
+    if (targetUnit && targetUnit.gameObj.body) {
+        targetId = targetUnit.id;
+    }
+    
     if (target) {
         // Apply movement mods
         if (hasMod(unit, ModType.DODGE_ENEMIES)) {
@@ -28,11 +35,11 @@ export function moveUnit(unit: Unit, target: Phaser.Math.Vector2, roomMap: Phase
             case "homingLOS":
                 //TODO could check line of sight before this, a bit more efficient
                 updateUnitTarget(unit, target, delta);
-                moveHomingUnit(unit, true, roomMap, debugGraphics);
+                moveHomingUnit(unit, true, roomScene, debugGraphics, targetId);
                 break;
             case "homing":
                 updateUnitTarget(unit, target, delta);
-                moveHomingUnit(unit, false, roomMap, debugGraphics);
+                moveHomingUnit(unit, false, roomScene, debugGraphics);
                 break;
             case "crawlerN":
                 moveCrawlerUnit(unit, target, 'N');
@@ -76,8 +83,9 @@ export function determineLineOfSightWidth(unit: Unit) {
 }
 
 /** Check if the origin can see the target in the current room. Return true if line of sight is free. */
-export function checkLineOfSight(origin: Phaser.Types.Math.Vector2Like, target: Phaser.Types.Math.Vector2Like,
-    lineOfSightWidth: number, roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
+export function checkLineOfSight(unit: Unit, target: Phaser.Types.Math.Vector2Like,
+        lineOfSightWidth: number, roomScene: RoomScene, debugGraphics: Phaser.GameObjects.Graphics, targetId?: number) {
+    let origin = unit.gameObj.body.center;
     // Create 3 lines from near center of origin to near center of target, to ensure space for firing weapons
     let targetVector = new Phaser.Math.Vector2(target).subtract(new Phaser.Math.Vector2(origin));
     let left = targetVector.clone().normalizeLeftHand().setLength(lineOfSightWidth / 2);
@@ -100,6 +108,7 @@ export function checkLineOfSight(origin: Phaser.Types.Math.Vector2Like, target: 
         debugGraphics.strokeLineShape(line3);
     }
 
+    let roomMap = roomScene.getRoomMap();
     let originTile = roomMap.layer.tilemapLayer.worldToTileXY(origin.x, origin.y, true);
     let targetTile = roomMap.layer.tilemapLayer.worldToTileXY(target.x, target.y, true);
     let pointStart = new Phaser.Math.Vector2(Math.min(originTile.x, targetTile.x), Math.min(originTile.y, targetTile.y));
@@ -122,11 +131,41 @@ export function checkLineOfSight(origin: Phaser.Types.Math.Vector2Like, target: 
             }
         }
     }
+
+    // Check for units in the way
+    let opposingUnits = [];
+    if (unit.playerOwned) {
+        opposingUnits = roomScene.getShipUnits().getChildren();
+    } else {
+        opposingUnits = roomScene.getPlayerUnits().getChildren();
+    }
+    for (let unit of opposingUnits) {
+        // Don't check for the unit being targeted
+        if (unit.getData("id") == targetId) {
+            continue;
+        }
+
+        //TODO optimization - can likely rule out some here before looping
+
+        let unitImage = unit as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+        let unitRect = new Phaser.Geom.Rectangle(0, 0, unitImage.width, unitImage.height);
+        unitRect.x = unitImage.getTopLeft().x;
+        unitRect.y = unitImage.getTopLeft().y;
+        if (debugGraphics) {
+            debugGraphics.strokeRectShape(unitRect);
+        }
+        // Only check center line for blocking units. Intersection means no line of sight
+        //TODO any reason to check other lines as well?
+        if (Phaser.Geom.Intersects.LineToRectangle(line1, unitRect)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
 /** Move a homing unit for one frame */
-function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilemaps.Tilemap, debugGraphics: Phaser.GameObjects.Graphics) {
+function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, debugGraphics: Phaser.GameObjects.Graphics, targetId?: number) {
     if (!unit.path || unit.path.length == 0 || unit.currentPathIndex < 0 || unit.currentPathIndex >= unit.path.length) {
         return;
     }
@@ -145,8 +184,8 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomMap: Phaser.Tilema
     // If the unit only needs line of sight and it has it, don't need to move any more.
     // Ghost projectiles mean the unit essentially always has line of sight.
     if (onlyNeedLOS && (hasMod(unit, ModType.GHOST_PROJECTILES) ||
-            checkLineOfSight(unit.gameObj.body.center, unit.path[unit.path.length - 1],
-            determineLineOfSightWidth(unit), roomMap, debugGraphics))) {
+            checkLineOfSight(unit, unit.path[unit.path.length - 1],
+            determineLineOfSightWidth(unit), roomScene, debugGraphics, targetId))) {
         unit.gameObj.setAcceleration(0);
         return;
     }
@@ -194,10 +233,21 @@ function trackAttachedGameObjects(unit: Unit) {
     });
 }
 
+/** Return true if the currentTarget is different from the target the unit is already after */
+function hasTargetChanged(unit: Unit, currentTarget: Phaser.Types.Math.Vector2Like) {
+    if (!unit.path || unit.path.length == 0 || unit.currentPathIndex < 0 || unit.currentPathIndex >= unit.path.length) {
+        return true;
+    }
+
+    let lastTarget = unit.path[unit.path.length - 1];
+    return lastTarget.x != currentTarget.x || lastTarget.y != currentTarget.y;
+}
+
 /** Generate a path for the unit to follow to the target using the room's navmesh */
 export function updateUnitTarget(unit: Unit, target: Phaser.Types.Math.Vector2Like, delta: number) {
     unit.timeSincePathfindMs += delta;
-    if (unit.timeSincePathfindMs < pathfindIntervalMs) {
+    // Don't need to wait for interval when the target has changed
+    if (unit.timeSincePathfindMs < pathfindIntervalMs && !hasTargetChanged(unit, target)) {
         return;
     }
 
