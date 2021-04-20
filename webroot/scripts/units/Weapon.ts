@@ -36,6 +36,9 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
             case "zapper":
                 createExplosion(unit.playerOwned, unit.gameObj.body.center, scene, "zapperExplosion", explosionLifetimeMs / 2);
                 break;
+            case "laser":
+                createLaser(unit.playerOwned, unit.gameObj.body.center, unit.gameObj.width / 3, unit.gameObj.rotation, scene);
+                break;
         }
         targets.forEach(target => {
             if (unit.playerOwned) {
@@ -45,6 +48,14 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
             }
         });
         unit.currentWeaponDelay = unit.weaponDelay;
+    }
+}
+
+function getBulletGroup(isPlayerOwned: boolean, scene: RoomScene) {
+    if (isPlayerOwned) {
+        return scene.getPlayerBulletGroup();
+    } else {
+        return scene.getShipBulletGroup();
     }
 }
 
@@ -75,23 +86,19 @@ function createBullet(bulletName: string, unit: Unit, target: Phaser.Math.Vector
 }
 
 function firePlayerBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
-    createBullet("playerBullet", unit, target, scene, scene.getPlayerBulletGroup());
+    createBullet("playerBullet", unit, target, scene, getBulletGroup(true, scene));
 }
 
 function fireShipBullet(unit: Unit, target: Phaser.Math.Vector2, scene: RoomScene) {
-    createBullet("shipBullet", unit, target, scene, scene.getShipBulletGroup());
+    createBullet("shipBullet", unit, target, scene, getBulletGroup(false, scene));
 }
 
 export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene, explosionName?: string, lifetimeMs?: number) {
-    let bulletGroup;
-    if (playerOwned) {
-        bulletGroup = scene.getPlayerBulletGroup();
-        if (!explosionName) {
+    let bulletGroup = getBulletGroup(playerOwned, scene);
+    if (!explosionName) {
+        if (playerOwned) {
             explosionName = "playerExplosion";
-        }
-    } else {
-        bulletGroup = scene.getShipBulletGroup();
-        if (!explosionName) {
+        } else {
             explosionName = "shipExplosion";
         }
     }
@@ -110,4 +117,25 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
     }
     scene.time.delayedCall(lifetimeMs, () => explosion.destroy());
     return explosion;
+}
+
+const laserScale = 25;
+const laserLifetimeMs = 1000;
+export function createLaser(playerOwned: boolean, position: Phaser.Math.Vector2, offset: number, angle: number, scene: RoomScene) {
+    let bulletGroup = getBulletGroup(playerOwned, scene);
+
+    //TODO laser colors for each side
+    console.log("firing laser");
+    let laserOrigin = Phaser.Math.Vector2.RIGHT.clone().rotate(angle).scale(offset).add(position);
+    let laser = scene.physics.add.image(laserOrigin.x, laserOrigin.y, "laser").setOrigin(0, 0.5);
+    laser.setRotation(angle);
+    //bulletGroup.defaults = {};
+    //bulletGroup.add(laser);
+    laser.setScale(laserScale, 1);
+    laser.setData("isAOE", true);
+    laser.setData("id", getNewId());
+    laser.setData("playerOwned", playerOwned);
+    laser.setAlpha(0.8);
+    scene.time.delayedCall(laserLifetimeMs, () => laser.destroy());
+    return laser;
 }
