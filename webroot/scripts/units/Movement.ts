@@ -133,7 +133,7 @@ export function checkLineOfSight(unit: Unit, target: Phaser.Types.Math.Vector2Li
     }
 
     // Check for units in the way
-    let opposingUnits = [];
+    /*let opposingUnits = [];
     if (unit.playerOwned) {
         opposingUnits = roomScene.getShipUnits().getChildren();
     } else {
@@ -159,7 +159,7 @@ export function checkLineOfSight(unit: Unit, target: Phaser.Types.Math.Vector2Li
         if (Phaser.Geom.Intersects.LineToRectangle(line1, unitRect)) {
             return false;
         }
-    }
+    }*/
 
     return true;
 }
