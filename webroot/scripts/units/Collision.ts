@@ -39,7 +39,11 @@ function getOverlapId(obj1: WithId, obj2: WithId) {
 function shouldSkipCurrentOverlap(overlapId: string) {
     if (overlapId in activeOverlaps && activeOverlaps[overlapId] > 0 &&
         activeOverlaps[overlapId] < framesToReOverlap) {
-        activeOverlaps[overlapId]++;
+        // When multiple projectiles with the same id overlap in same frame (laser), 
+        // don't count up for each individual projectile - only count up once per frame.
+        if (!(overlapId in currentFrameOverlaps) || !currentFrameOverlaps[overlapId]) {
+            activeOverlaps[overlapId]++;
+        }
         return true;
     }
     return false;
@@ -78,10 +82,11 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
     }
 
     let overlapId = getOverlapId(unit, { id: proj.getData("id") });
-    currentFrameOverlaps[overlapId] = true;
     if (shouldSkipCurrentOverlap(overlapId)) {
+        currentFrameOverlaps[overlapId] = true;
         return;
     }
+    currentFrameOverlaps[overlapId] = true;
     activeOverlaps[overlapId] = 1;
 
     //TODO different damage per weapon and per modifier
@@ -102,10 +107,11 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
     }
 
     let overlapId = getOverlapId(unit1, unit2);
-    currentFrameOverlaps[overlapId] = true;
     if (shouldSkipCurrentOverlap(overlapId)) {
+        currentFrameOverlaps[overlapId] = true;
         return;
     }
+    currentFrameOverlaps[overlapId] = true;
 
     activeOverlaps[overlapId] = 1;
 

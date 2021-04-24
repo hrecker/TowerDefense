@@ -271,5 +271,5 @@ export function takeDamage(unit: Unit, damage: number) {
 
 /** Check if unit has an active mod of the given type */
 export function hasMod(unit: Unit, type: ModType): boolean {
-    return unit.mods[type] && unit.mods[type].length > 0;
+    return unit && unit.mods[type] && unit.mods[type].length > 0;
 }
