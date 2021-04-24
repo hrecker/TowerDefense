@@ -125,7 +125,6 @@ const laserScale = 25;
 const laserLifetimeMs = 600;
 export function createLaser(playerOwned: boolean, position: Phaser.Math.Vector2, offset: number, angle: number, scene: RoomScene) {
     //TODO laser colors for each side
-    console.log("firing laser");
     let laserDir = Phaser.Math.Vector2.RIGHT.clone().rotate(angle);
     let laserOrigin = laserDir.clone().scale(offset).add(position);
     // Laser image is not connected to physics

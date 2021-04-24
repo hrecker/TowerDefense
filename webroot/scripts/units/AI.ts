@@ -19,8 +19,14 @@ export function getUnitTarget(unit: Unit, roomScene: RoomScene): Unit {
             if (targetValid) {
                 targetUnit = sceneUnits[targetId];
             } else {
-                for (const unitIdStr of Object.keys(sceneUnits)) {
-                    let unitId = parseInt(unitIdStr)
+                let sortedByDistance = Object.keys(sceneUnits).sort((keyAStr, keyBStr) => {
+                    let keyA = parseInt(keyAStr);
+                    let keyB = parseInt(keyBStr);
+                    return sceneUnits[keyA].gameObj.getCenter().distance(unit.gameObj.getCenter()) - 
+                        sceneUnits[keyB].gameObj.getCenter().distance(unit.gameObj.getCenter());
+                });
+                for (const unitIdStr of sortedByDistance) {
+                    let unitId = parseInt(unitIdStr);
                     // Get the first non-target enemy in the scene
                     if (sceneUnits[unitId].playerOwned && sceneUnits[unitId].name != "target") {
                         targetUnit = sceneUnits[unitId];

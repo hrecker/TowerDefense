@@ -395,23 +395,24 @@ const dodgeRadius = 50;
 /** Check for nearby enemies and apply some dodge velocity if any are found*/
 function dodgeNearestEnemy(unit: Unit, dodgeMod: Mod, roomScene: RoomScene): boolean {
     let nearby = roomScene.physics.overlapCirc(unit.gameObj.body.center.x, unit.gameObj.body.center.y, dodgeRadius);
-    // Always expect 1 nearby unit for the ship itself
-    if (nearby.length > 1) {
-        for (let i = 0; i < nearby.length; i++) {
-            let body = nearby[i];
-            if (body.gameObject.getData("playerOwned") != undefined && unit.playerOwned != body.gameObject.getData("playerOwned") && 
-                    !body.velocity.equals(Phaser.Math.Vector2.ZERO)) {
-                let dodgeVel = body.velocity.clone().normalize().scale(dodgeMod.props.dodgeSpeed);
-                // Randomly choose dodge direction - perpendicular to velocity of what is being dodged
-                if (Math.random() < 0.5) {
-                    dodgeVel.normalizeLeftHand();
-                } else {
-                    dodgeVel.normalizeRightHand();
-                }
-                unit.gameObj.setVelocity(dodgeVel.x, dodgeVel.y);
-                return true;
-            }
+    let nearbyEnemies = (nearby as Phaser.Physics.Arcade.Body[]).filter(body => 
+            body.gameObject.getData("playerOwned") != undefined && 
+            unit.playerOwned != body.gameObject.getData("playerOwned") && 
+            !body.velocity.equals(Phaser.Math.Vector2.ZERO));
+    // Find the closest enemy
+    nearbyEnemies.sort((a, b) => {
+        return a.center.distance(unit.gameObj.getCenter()) - b.center.distance(unit.gameObj.getCenter());
+    })
+    if (nearbyEnemies.length > 0) {
+        let dodgeVel = nearbyEnemies[0].velocity.clone().normalize().scale(dodgeMod.props.dodgeSpeed);
+        // Randomly choose dodge direction - perpendicular to velocity of what is being dodged
+        if (Math.random() < 0.5) {
+            dodgeVel.normalizeLeftHand();
+        } else {
+            dodgeVel.normalizeRightHand();
         }
+        unit.gameObj.setVelocity(dodgeVel.x, dodgeVel.y);
+        return true;
     }
     return false;
 }
