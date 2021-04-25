@@ -115,12 +115,16 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
 
     activeOverlaps[overlapId] = 1;
 
+    //TODO ship subordinate units
     let ship = unit1;
     if (unit2.name == "ship") {
         ship = unit2;
     }
 
-    //TODO modifiers etc.
+    if (hasMod(unit1, ModType.NO_CONTACT_DAMAGE) || hasMod(unit2, ModType.NO_CONTACT_DAMAGE)) {
+        return;
+    }
+    
     takeDamage(ship, 1);
 }
 

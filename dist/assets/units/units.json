@@ -20,7 +20,10 @@
         "playerOwned": true,
         "health": 10,
         "purchasable": false,
-        "bodySize": 24
+        "bodySize": 24,
+        "defaultMods": {
+            "NO_CONTACT_DAMAGE": {}
+        }
     },
     "spikeball": {
         "name": "spikeball",
