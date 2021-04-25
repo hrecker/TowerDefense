@@ -3,7 +3,7 @@ import { hasMod, Unit } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 import { getNewId } from "../state/IdState";
 
-export const projectileNames = ["playerBullet", "shipBullet", "playerExplosion", "shipExplosion"];
+export const projectileNames = ["playerBullet", "shipBullet", "playerExplosion", "shipExplosion", "zapperExplosion"];
 //TODO make this modifiable in some way?
 const bulletSpeed = 100;
 const bulletLifetimeMs = 10000;
@@ -34,7 +34,7 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
                 }
                 break;
             case "zapper":
-                createExplosion(unit.playerOwned, unit.gameObj.body.center, scene, "zapperExplosion", explosionLifetimeMs / 2);
+                createExplosion(unit.playerOwned, unit.gameObj.body.center, scene, 64, "zapperExplosion", explosionLifetimeMs / 2);
                 break;
             case "laser":
                 createLaser(unit.playerOwned, unit.gameObj.body.center, unit.gameObj.width / 3, unit.gameObj.rotation, scene);
@@ -95,7 +95,8 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
     return bullet;
 }
 
-export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene, explosionName?: string, lifetimeMs?: number) {
+const defaultExplosionSize = 32;
+export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene, size?: number, explosionName?: string, lifetimeMs?: number) {
     let bulletGroup = getBulletGroup(playerOwned, scene);
     if (!explosionName) {
         if (playerOwned) {
@@ -111,7 +112,10 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
     explosion.setData("id", getNewId());
     explosion.setData("playerOwned", playerOwned);
     explosion.setAlpha(0.3);
-    explosion.body.setCircle(32);
+    if (!size) {
+        size = defaultExplosionSize;
+    }
+    explosion.body.setCircle(size);
     explosion.setName(explosionName);
     // Destroy explosion after some time passes
     if (!lifetimeMs) {

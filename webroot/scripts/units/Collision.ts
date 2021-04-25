@@ -124,7 +124,7 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
     if (hasMod(unit1, ModType.NO_CONTACT_DAMAGE) || hasMod(unit2, ModType.NO_CONTACT_DAMAGE)) {
         return;
     }
-    
+
     takeDamage(ship, 1);
 }
 
