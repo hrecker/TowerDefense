@@ -1,4 +1,3 @@
-import { Body } from "matter";
 import { Mod, ModType } from "../model/Mods";
 import { Unit, hasMod } from "../model/Units";
 import { RoomScene, tileWidthPixels } from "../scenes/RoomScene";
@@ -103,7 +102,6 @@ export function checkLineOfSight(unit: Unit, target: Phaser.Types.Math.Vector2Li
 
     // Debugging for line of sight
     if (debugGraphics) {
-        debugGraphics.clear();
         debugGraphics.strokeLineShape(line1);
         debugGraphics.strokeLineShape(line2);
         debugGraphics.strokeLineShape(line3);
@@ -167,6 +165,9 @@ export function checkLineOfSight(unit: Unit, target: Phaser.Types.Math.Vector2Li
 
 /** Move a homing unit for one frame */
 function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, debugGraphics: Phaser.GameObjects.Graphics, targetId?: number) {
+    if (debugGraphics) {
+        debugGraphics.clear();
+    }
     if (!unit.path || unit.path.length == 0 || unit.currentPathIndex < 0 || unit.currentPathIndex >= unit.path.length) {
         return;
     }
@@ -174,20 +175,33 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, 
     // Get direction unit should move to hit target
     let target = new Phaser.Math.Vector2(unit.path[unit.currentPathIndex]);
     let homingDir = homingDirection(unit.gameObj.body, target, unit.maxAcceleration);
-    let targetAngle = homingDir.clone().add(unit.gameObj.body.center);
-
-    if (unit.rotation) {
-        // Rotate towards the target
-        let angleBetween = Phaser.Math.Angle.BetweenPoints(unit.gameObj.body.center, targetAngle);
-        unit.gameObj.setRotation(Phaser.Math.Angle.RotateTo(unit.gameObj.rotation, angleBetween, unit.maxAngularSpeed));
-    }
+    let targetRotationAngle = homingDir.angle();
 
     // If the unit only needs line of sight and it has it, don't need to move any more.
     // Ghost projectiles mean the unit essentially always has line of sight.
-    if (onlyNeedLOS && (hasMod(unit, ModType.GHOST_PROJECTILES) ||
-            checkLineOfSight(unit, unit.path[unit.path.length - 1],
-            determineLineOfSightWidth(unit), roomScene, debugGraphics, targetId))) {
+    let lastPathTarget = unit.path[unit.path.length - 1];
+    let hasLOS = onlyNeedLOS && (hasMod(unit, ModType.GHOST_PROJECTILES) ||
+            checkLineOfSight(unit, lastPathTarget,
+            determineLineOfSightWidth(unit), roomScene, debugGraphics, targetId));
+    if (hasLOS) {
         unit.gameObj.setAcceleration(0);
+        targetRotationAngle = new Phaser.Math.Vector2(lastPathTarget.x, lastPathTarget.y).subtract(unit.gameObj.body.center).angle();
+    }
+
+    if (unit.rotation) {
+        // Rotate towards the target        
+        unit.gameObj.setRotation(Phaser.Math.Angle.RotateTo(unit.gameObj.rotation, targetRotationAngle, unit.maxAngularSpeed));
+        // Draw line being rotated towards
+        if (debugGraphics) {
+            let targetStretched = Phaser.Math.Vector2.RIGHT.clone().rotate(targetRotationAngle).scale(50);
+            let debugLine = new Phaser.Geom.Line(unit.gameObj.body.center.x, unit.gameObj.body.center.y, 
+                    unit.gameObj.body.center.x + targetStretched.x, unit.gameObj.body.center.y + targetStretched.y);
+            debugGraphics.strokeLineShape(debugLine);
+        }
+    }
+
+    // Exit early if LOS is all that's needed
+    if (hasLOS) {
         return;
     }
 
