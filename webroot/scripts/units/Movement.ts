@@ -1,3 +1,4 @@
+import { Body } from "matter";
 import { Mod, ModType } from "../model/Mods";
 import { Unit, hasMod } from "../model/Units";
 import { RoomScene, tileWidthPixels } from "../scenes/RoomScene";
@@ -397,19 +398,25 @@ function dodgeNearestEnemy(unit: Unit, dodgeMod: Mod, roomScene: RoomScene): boo
     let nearby = roomScene.physics.overlapCirc(unit.gameObj.body.center.x, unit.gameObj.body.center.y, dodgeRadius);
     let nearbyEnemies = (nearby as Phaser.Physics.Arcade.Body[]).filter(body => 
             body.gameObject.getData("playerOwned") != undefined && 
-            unit.playerOwned != body.gameObject.getData("playerOwned") && 
-            !body.velocity.equals(Phaser.Math.Vector2.ZERO));
+            unit.playerOwned != body.gameObject.getData("playerOwned"));
     // Find the closest enemy
     nearbyEnemies.sort((a, b) => {
         return a.center.distance(unit.gameObj.getCenter()) - b.center.distance(unit.gameObj.getCenter());
     })
     if (nearbyEnemies.length > 0) {
-        let dodgeVel = nearbyEnemies[0].velocity.clone().normalize().scale(dodgeMod.props.dodgeSpeed);
-        // Randomly choose dodge direction - perpendicular to velocity of what is being dodged
-        if (Math.random() < 0.5) {
-            dodgeVel.normalizeLeftHand();
+        let dodgeVel;
+        let enemy = nearbyEnemies[0];
+        if (enemy.velocity.equals(Phaser.Math.Vector2.ZERO)) {
+            //TODO handle when backing away just gets the ship stuck in a corner?
+            dodgeVel = unit.gameObj.getCenter().clone().subtract(enemy.center).normalize().scale(dodgeMod.props.dodgeSpeed);
         } else {
-            dodgeVel.normalizeRightHand();
+            dodgeVel = enemy.velocity.clone().normalize().scale(dodgeMod.props.dodgeSpeed);
+            // Randomly choose dodge direction - perpendicular to velocity of what is being dodged
+            if (Math.random() < 0.5) {
+                dodgeVel.normalizeLeftHand();
+            } else {
+                dodgeVel.normalizeRightHand();
+            }
         }
         unit.gameObj.setVelocity(dodgeVel.x, dodgeVel.y);
         return true;

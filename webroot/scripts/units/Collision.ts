@@ -131,9 +131,9 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
 /** Handle projectiles that need special behavior when hitting the room geometry (destroy, bounce, explode, etc.) */
 export function handleProjectileHitGeometry(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamicBody, obj2: Phaser.Types.Physics.Arcade.ImageWithDynamicBody) {
     // In these callbacks, tilemap doesn't seem to have the getData function, so have to check for it
-    let bullet = obj2;
     if (typeof obj1.getData === "function" && obj1.getData("isBullet")) {
-        bullet = obj1;
+        projectileOnHit(obj1, this);
+    } else if (typeof obj2.getData === "function" && obj2.getData("isBullet")) {
+        projectileOnHit(obj2, this);
     }
-    projectileOnHit(bullet, this);
 }
