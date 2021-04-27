@@ -417,11 +417,16 @@ function dodgeNearestEnemy(unit: Unit, dodgeMod: Mod, roomScene: RoomScene): boo
     nearbyEnemies.sort((a, b) => {
         return a.center.distance(unit.gameObj.getCenter()) - b.center.distance(unit.gameObj.getCenter());
     })
-    if (nearbyEnemies.length > 0) {
+    for (let i = 0; i < nearbyEnemies.length; i++) {
         let dodgeVel;
-        let enemy = nearbyEnemies[0];
+        let enemy = nearbyEnemies[i];
         if (enemy.velocity.equals(Phaser.Math.Vector2.ZERO)) {
             //TODO handle when backing away just gets the ship stuck in a corner?
+            // Don't dodge units that don't deal contact damage
+            let enemyUnit = roomScene.getUnit(enemy.gameObject.getData("id"));
+            if (enemyUnit && hasMod(enemyUnit, ModType.NO_CONTACT_DAMAGE)) {
+                continue;
+            }
             dodgeVel = unit.gameObj.getCenter().clone().subtract(enemy.center).normalize().scale(dodgeMod.props.dodgeSpeed);
         } else {
             dodgeVel = enemy.velocity.clone().normalize().scale(dodgeMod.props.dodgeSpeed);

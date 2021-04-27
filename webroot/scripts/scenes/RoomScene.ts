@@ -284,7 +284,7 @@ export class RoomScene extends Phaser.Scene {
     }
 
     getUnit(id: number) {
-        if (!id) {
+        if (!id || !(id in sceneUnits)) {
             return null;
         }
         return sceneUnits[id];
