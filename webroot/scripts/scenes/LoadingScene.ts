@@ -25,6 +25,13 @@ export class LoadingScene extends Phaser.Scene {
         this.load.image("target", "assets/sprites/target.png");
         this.load.image("block", "assets/sprites/block.png");
         this.load.image("shield", "assets/sprites/shield.png");
+        
+        // UI images
+        this.load.image("DODGE_ENEMIES", "assets/sprites/mods/dodge_enemies.png");
+        this.load.image("TARGET_ENEMIES", "assets/sprites/mods/target_enemies.png");
+        this.load.image("PROJECTILE_SCALE", "assets/sprites/mods/projectile_scale.png");
+        this.load.image("GHOST_PROJECTILES", "assets/sprites/mods/ghost_projectiles.png");
+        this.load.image("EXPLODING_PROJECTILES", "assets/sprites/mods/exploding_projectiles.png");
 
         // Load room tilemaps
         this.load.json("rooms", "assets/rooms/rooms.json");
@@ -34,6 +41,7 @@ export class LoadingScene extends Phaser.Scene {
 
         // Load json
         this.load.json("units", "assets/units/units.json");
+        this.load.json("shipMods", "assets/units/shipMods.json");
     }
 
     create() {

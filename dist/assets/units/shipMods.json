@@ -5,24 +5,24 @@
             "currentCooldownMs": 0, 
             "dodgeSpeed": 500
         },
-        "tooltip": "Ship dodges hazards"
+        "tooltip": "Dodges hazards"
     },
     "TARGET_ENEMIES": {
         "props": {
             "currentTargetId": -1
         },
-        "tooltip": "Ship targets enemies"
+        "tooltip": "Targets enemies"
     },
     "PROJECTILE_SCALE": {
         "props": {
             "projectileScale": 2
         },
-        "tooltip": "Ship has big projectiles"
+        "tooltip": "Big projectiles"
     },
     "GHOST_PROJECTILES": {
-        "tooltip": "Ship has ghost projectiles"
+        "tooltip": "Ghost projectiles"
     },
     "EXPLODING_PROJECTILES": {
-        "tooltip": "Ship has exploding projectiles"
+        "tooltip": "Exploding projectiles"
     }
 }

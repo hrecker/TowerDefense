@@ -1,11 +1,12 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
-import { setShopSelection, addInvalidUnitPlacementListener } from "../state/UIState";
+import { setShopSelection, addInvalidUnitPlacementListener, getActiveShipMods } from "../state/UIState";
 import { addTimerMsListener, addRoomStatusListener, RoomStatus } from "../state/RoomState";
 import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
 
 const unitSelectionBoxWidth = 192;
 const shopSelectionBoxDefaultColor = 0x6400b5;
 const shopSelectionBoxHighlightColor = 0x8a57b3;
+const modIconAlpha = 0.8;
 
 let unitSelectionCenterX;
 let activeShopSelectionIndex = -1;
@@ -16,6 +17,10 @@ let roomStatusText: Phaser.GameObjects.Text;
 let timerText: Phaser.GameObjects.Text;
 let invalidPlacementText: Phaser.GameObjects.Text;
 let invalidPlacementTextHideEvent: Phaser.Time.TimerEvent;
+let shipModIcons: Phaser.GameObjects.Image[] = [];
+let shipModTooltipBackground: Phaser.GameObjects.Rectangle;
+let shipModTooltipText: Phaser.GameObjects.Text;
+let shipModTooltip: Phaser.GameObjects.Group;
 
 // UI displayed over RoomScene
 export class RoomUIScene extends Phaser.Scene {
@@ -65,6 +70,13 @@ export class RoomUIScene extends Phaser.Scene {
             this.add.text(unitSelectionCenterX, 44 + i * 64, purchasableUnits[i].name).setOrigin(0.5);
             this.add.text(unitSelectionCenterX, 64 + i * 64, purchasableUnits[i].price.toString()).setOrigin(0.5);
         }
+
+        //TODO listener for ship mods that get generated when the scene starts
+        this.setShipModIcons(getActiveShipMods());
+        shipModTooltipBackground = this.add.rectangle(8, 64, 400, 24, 0xc4c4c4, 1).setOrigin(0, 0);
+        shipModTooltipText = this.add.text(10, 68, "Sample text", { color: "#000" }).setOrigin(0, 0);
+        shipModTooltip = this.add.group([shipModTooltipBackground, shipModTooltipText]);
+        shipModTooltip.setVisible(false);
     }
 
     selectShopItem(index) {
@@ -132,6 +144,31 @@ export class RoomUIScene extends Phaser.Scene {
             invalidPlacementTextHideEvent = scene.time.delayedCall(3000, () => {
                 invalidPlacementText.setVisible(false);
             });
+        }
+    }
+
+    setShipModIcons(activeMods: string[]) {
+        let max = Math.max(activeMods.length, shipModIcons.length);
+        for (let i = 0; i < max; i++) {
+            if (i < activeMods.length) {
+                if (i < shipModIcons.length) {
+                    shipModIcons[i].setTexture(activeMods[i]).setVisible(true);
+                } else {
+                    let newIcon = this.add.image(32 + (56 * i), 32, activeMods[i]).setAlpha(modIconAlpha);
+                    newIcon.setInteractive();
+                    newIcon.on("pointerover", () => {
+                        shipModTooltip.setVisible(true);
+                        shipModTooltipText.setText(this.cache.json.get("shipMods")[activeMods[i]]["tooltip"]);
+                        shipModTooltipBackground.displayWidth = shipModTooltipText.width + 2;
+                    });
+                    newIcon.on("pointerout", () => {
+                        shipModTooltip.setVisible(false);
+                    });
+                    shipModIcons.push(newIcon);
+                }
+            } else if (i < shipModIcons.length) {
+                shipModIcons[i].setVisible(false);
+            }
         }
     }
 }

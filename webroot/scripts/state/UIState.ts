@@ -35,3 +35,8 @@ export function addInvalidUnitPlacementListener(callback, scene) {
         scene: scene
     });
 }
+
+export function getActiveShipMods(): string[] {
+    //TODO get actual active mods
+    return [ "DODGE_ENEMIES", "TARGET_ENEMIES", "PROJECTILE_SCALE", "GHOST_PROJECTILES", "EXPLODING_PROJECTILES" ];
+}
