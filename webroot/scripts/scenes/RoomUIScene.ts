@@ -1,5 +1,5 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
-import { setShopSelection, addInvalidUnitPlacementListener, getActiveShipMods } from "../state/UIState";
+import { setShopSelection, addInvalidUnitPlacementListener, getActiveShipMods, addShipModListener } from "../state/UIState";
 import { addTimerMsListener, addRoomStatusListener, RoomStatus } from "../state/RoomState";
 import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
 
@@ -77,6 +77,8 @@ export class RoomUIScene extends Phaser.Scene {
         shipModTooltipText = this.add.text(10, 68, "Sample text", { color: "#000" }).setOrigin(0, 0);
         shipModTooltip = this.add.group([shipModTooltipBackground, shipModTooltipText]);
         shipModTooltip.setVisible(false);
+
+        addShipModListener(this.setShipModIcons, this);
     }
 
     selectShopItem(index) {
@@ -158,7 +160,7 @@ export class RoomUIScene extends Phaser.Scene {
                     newIcon.setInteractive();
                     newIcon.on("pointerover", () => {
                         shipModTooltip.setVisible(true);
-                        shipModTooltipText.setText(this.cache.json.get("shipMods")[activeMods[i]]["tooltip"]);
+                        shipModTooltipText.setText(this.cache.json.get("shipMods")[getActiveShipMods()[i]]["tooltip"]);
                         shipModTooltipBackground.displayWidth = shipModTooltipText.width + 2;
                     });
                     newIcon.on("pointerout", () => {

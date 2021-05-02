@@ -5,6 +5,8 @@ let shopSelection: Unit;
 let shopSelectionCallbacks = [];
 let invalidUnitPlacementReason: string;
 let invalidUnitPlacementCallbacks = [];
+let activeShipMods: string[];
+let shipModCallbacks = [];
 
 export function setShopSelection(selection: Unit) {
     shopSelection = selection;
@@ -36,7 +38,19 @@ export function addInvalidUnitPlacementListener(callback, scene) {
     });
 }
 
+export function setActiveShipMods(activeMods: string[]) {
+    activeShipMods = activeMods;
+    shipModCallbacks.forEach(callback => 
+        callback.callback(activeShipMods, callback.scene));
+}
+
 export function getActiveShipMods(): string[] {
-    //TODO get actual active mods
-    return [ "DODGE_ENEMIES", "TARGET_ENEMIES", "PROJECTILE_SCALE", "GHOST_PROJECTILES", "EXPLODING_PROJECTILES" ];
+    return activeShipMods;
+}
+
+export function addShipModListener(callback, scene) {
+    shipModCallbacks.push({ 
+        callback: callback,
+        scene: scene
+    });
 }

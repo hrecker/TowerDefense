@@ -5,7 +5,7 @@ import { handleUnitHit, handleProjectileHit, updateFrameOverlaps, handleProjecti
 import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
-import { addShopSelectionListener, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
+import { addShopSelectionListener, getActiveShipMods, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
 
@@ -163,6 +163,9 @@ export class RoomScene extends Phaser.Scene {
           drawNeighbors: true,
           drawPortals: false
         });*/
+
+        //TODO number of mods based on level/room?
+        ai.randomizeShipMods(1, this);
     }
 
     spawnShipUnit() {
@@ -171,10 +174,14 @@ export class RoomScene extends Phaser.Scene {
         // Add a 1-second "infinitely" strong shield so the player can't always cheese the ship by
         // dumping a bunch of units on the spawn point
         createUnitMod(ship, ModType.SHIELD, { duration: 1000, shieldStrength: 10000, attachSprite: "shield" }, this);
+        // Activate any randomly chosen mods
+        getActiveShipMods().forEach(modName => {
+            createUnitMod(ship, ModType[modName], this.cache.json.get("shipMods")[modName]["props"], this);
+        });
         // Ship avoids enemies
-        createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
+        //createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
         // Ship targets enemies
-        createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
+        //createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
         //createUnitMod(ship, ModType.EXPLODING_PROJECTILES, null, this);
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
