@@ -165,8 +165,8 @@ export class RoomScene extends Phaser.Scene {
         });*/
 
         //TODO number of mods based on level/room?
-        ai.randomizeShipMods(1, this);
         ai.randomizeShipWeapon(this);
+        ai.randomizeShipMods(getActiveShipWeapon(), 1, this);
     }
 
     spawnShipUnit() {

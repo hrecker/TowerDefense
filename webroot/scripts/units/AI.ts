@@ -4,9 +4,15 @@ import { RoomScene } from "../scenes/RoomScene";
 import { getRandomArrayElements } from "../util/Util";
 import { setActiveShipWeapon, setActiveShipMods } from "../state/RoomState";
 
-export function randomizeShipMods(numActive: number, roomScene: RoomScene) {
-    let allMods = Object.keys(roomScene.cache.json.get("shipMods"));
-    setActiveShipMods(getRandomArrayElements(allMods, numActive));
+export function randomizeShipMods(weapon: string, numActive: number, roomScene: RoomScene) {
+    let modOptions = Object.keys(roomScene.cache.json.get("shipMods"));
+    let incompatibleMods = roomScene.cache.json.get("shipWeapons")[weapon]["incompatibleMods"];
+    if (incompatibleMods) {
+        modOptions = modOptions.filter(mod => {
+            return !incompatibleMods.includes(mod);
+        });
+    }
+    setActiveShipMods(getRandomArrayElements(modOptions, numActive));
 }
 
 export function randomizeShipWeapon(roomScene: RoomScene) {
