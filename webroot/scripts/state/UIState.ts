@@ -5,8 +5,6 @@ let shopSelection: Unit;
 let shopSelectionCallbacks = [];
 let invalidUnitPlacementReason: string;
 let invalidUnitPlacementCallbacks = [];
-let activeShipMods: string[];
-let shipModCallbacks = [];
 
 export function setShopSelection(selection: Unit) {
     shopSelection = selection;
@@ -33,23 +31,6 @@ export function setInvalidUnitPlacementReason(reason: string) {
 
 export function addInvalidUnitPlacementListener(callback, scene) {
     invalidUnitPlacementCallbacks.push({ 
-        callback: callback,
-        scene: scene
-    });
-}
-
-export function setActiveShipMods(activeMods: string[]) {
-    activeShipMods = activeMods;
-    shipModCallbacks.forEach(callback => 
-        callback.callback(activeShipMods, callback.scene));
-}
-
-export function getActiveShipMods(): string[] {
-    return activeShipMods;
-}
-
-export function addShipModListener(callback, scene) {
-    shipModCallbacks.push({ 
         callback: callback,
         scene: scene
     });

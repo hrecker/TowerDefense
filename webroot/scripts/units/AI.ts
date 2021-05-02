@@ -1,12 +1,17 @@
 import { hasMod, Unit } from "../model/Units";
 import { ModType } from "../model/Mods";
 import { RoomScene } from "../scenes/RoomScene";
-import { setActiveShipMods } from "../state/UIState";
 import { getRandomArrayElements } from "../util/Util";
+import { setActiveShipWeapon, setActiveShipMods } from "../state/RoomState";
 
 export function randomizeShipMods(numActive: number, roomScene: RoomScene) {
     let allMods = Object.keys(roomScene.cache.json.get("shipMods"));
     setActiveShipMods(getRandomArrayElements(allMods, numActive));
+}
+
+export function randomizeShipWeapon(roomScene: RoomScene) {
+    let allWeapons = Object.keys(roomScene.cache.json.get("shipWeapons"));
+    setActiveShipWeapon(getRandomArrayElements(allWeapons, 1)[0]);
 }
 
 // Get the appropriate unit for the provided unit to target in the room, or null if no target unit is around

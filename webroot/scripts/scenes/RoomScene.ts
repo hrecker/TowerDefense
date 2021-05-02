@@ -5,8 +5,8 @@ import { handleUnitHit, handleProjectileHit, updateFrameOverlaps, handleProjecti
 import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
-import { addShopSelectionListener, getActiveShipMods, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
-import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus } from "../state/RoomState";
+import { addShopSelectionListener, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
+import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus, getActiveShipMods, getActiveShipWeapon } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
 
 let ship: Unit;
@@ -166,6 +166,7 @@ export class RoomScene extends Phaser.Scene {
 
         //TODO number of mods based on level/room?
         ai.randomizeShipMods(1, this);
+        ai.randomizeShipWeapon(this);
     }
 
     spawnShipUnit() {
@@ -178,11 +179,10 @@ export class RoomScene extends Phaser.Scene {
         getActiveShipMods().forEach(modName => {
             createUnitMod(ship, ModType[modName], this.cache.json.get("shipMods")[modName]["props"], this);
         });
-        // Ship avoids enemies
-        //createUnitMod(ship, ModType.DODGE_ENEMIES, { dodgeCooldownMs: 1000, currentCooldownMs: 0, dodgeSpeed: 500 }, this);
-        // Ship targets enemies
-        //createUnitMod(ship, ModType.TARGET_ENEMIES, { currentTargetId: -1 }, this);
-        //createUnitMod(ship, ModType.EXPLODING_PROJECTILES, null, this);
+        // Set properties based on randomly chosen weapon
+        //TODO similar separate props like mods do here, if there end up being more weapon properties to set
+        ship.weapon = getActiveShipWeapon();
+        ship.weaponDelay = this.cache.json.get("shipWeapons")[ship.weapon]["weaponDelay"];
         sceneUnits[ship.id] = ship;
         shipUnits.add(ship.gameObj);
         move.updateUnitTarget(ship, roomTarget.gameObj.body.center, 10000);

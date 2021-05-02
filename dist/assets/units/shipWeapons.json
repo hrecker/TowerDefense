@@ -1,0 +1,14 @@
+{
+    "peaShooter": {
+        "weaponDelay": 800,
+        "tooltip": "Pea shooter"
+    },
+    "shotgun": {
+        "weaponDelay": 1000,
+        "tooltip": "Shotgun"
+    },
+    "laser": {
+        "weaponDelay": 1500,
+        "tooltip": "Laser"
+    }
+}
