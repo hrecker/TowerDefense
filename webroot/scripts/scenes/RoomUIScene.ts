@@ -52,7 +52,7 @@ export class RoomUIScene extends Phaser.Scene {
         addRoomStatusListener(this.updateRoomStatus, this);
         this.updateRoomStatus(RoomStatus.COUNTDOWN);
 
-        invalidPlacementText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 250, "Invalid placement", { fontSize: "16px" }).setOrigin(0.5);
+        invalidPlacementText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 200, "Invalid placement", { fontSize: "16px" }).setOrigin(0.5);
         invalidPlacementText.setWordWrapWidth(unitSelectionBoxWidth - 20);
         invalidPlacementText.setVisible(false);
         addInvalidUnitPlacementListener(this.showInvalidUnitPlacement, this);
