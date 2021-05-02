@@ -7,7 +7,7 @@ import { setActiveShipWeapon, setActiveShipMods } from "../state/RoomState";
 export function randomizeShipMods(weapon: string, numActive: number, roomScene: RoomScene) {
     let modOptions = Object.keys(roomScene.cache.json.get("shipMods"));
     modOptions = modOptions.filter(mod => {
-        return weaponAndModCompatible(weapon, mod, roomScene);
+        return weaponAndModCompatible("ship", weapon, mod, roomScene);
     });
     setActiveShipMods(getRandomArrayElements(modOptions, numActive));
 }

@@ -14,6 +14,18 @@ const shotgunSpreadRadians = 1.0;
 export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta: number, scene: RoomScene) {
     if (unit.currentWeaponDelay > 0) {
         unit.currentWeaponDelay -= delta;
+
+        // Track laser with ship movement
+        if (unit.weapon == "laser" && unit.otherAttachements["laser"]) {
+            let laserComponents: Phaser.Types.Physics.Arcade.ImageWithDynamicBody[] = unit.otherAttachements["laser"];
+            let laserDir = Phaser.Math.Vector2.RIGHT.clone().rotate(unit.gameObj.rotation);
+            laserComponents.forEach(component => {
+                let offset = component.getData("offset");
+                let newPos = laserDir.clone().scale(offset).add(unit.gameObj.body.center);
+                component.setPosition(newPos.x, newPos.y);
+                component.setRotation(unit.gameObj.rotation);
+            });
+        }
     } else if (target) {
         let targets = [];
         switch (unit.weapon) {
@@ -69,10 +81,10 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
     let bullet = scene.physics.add.image(position.x, position.y, getBulletName(isPlayerOwned));
     getBulletGroup(isPlayerOwned, scene).add(bullet);
     // ghost projectiles pass through obstacles, so don't add them to the projectile physics group
-    if (!hasMod(unit, ModType.GHOST_PROJECTILES) || !weaponAndModCompatible(unit.weapon, ModType.GHOST_PROJECTILES, scene)) {
+    if (!hasMod(unit, ModType.GHOST_PROJECTILES) || !weaponAndModCompatible(unit.name, unit.weapon, ModType.GHOST_PROJECTILES, scene)) {
         scene.getProjectileGroup().add(bullet);
     }
-    if (hasMod(unit, ModType.EXPLODING_PROJECTILES) && weaponAndModCompatible(unit.weapon, ModType.EXPLODING_PROJECTILES, scene)) {
+    if (hasMod(unit, ModType.EXPLODING_PROJECTILES) && weaponAndModCompatible(unit.name, unit.weapon, ModType.EXPLODING_PROJECTILES, scene)) {
         bullet.setData("exploding", true);
     }
     bullet.setData("isBullet", true);
@@ -80,7 +92,7 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
     bullet.setData("playerOwned", isPlayerOwned);
     bullet.body.setCircle(8);
     bullet.setName(getBulletName(isPlayerOwned));
-    if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
+    if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.name, unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
         bullet.setScale(unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale);
     }
     if (!velocity) {
@@ -133,9 +145,10 @@ export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: n
     let laserOrigin = laserDir.clone().scale(offset).add(position);
     // Laser image is not connected to physics
     let laser = scene.add.image(laserOrigin.x, laserOrigin.y, "laser").setOrigin(0, 0.5);
+    let laserComponents = [];
     laser.setRotation(angle);
     let yScale = 1;
-    if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
+    if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.name, unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
         yScale = unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale;
     }
     laser.setScale(laserScale, yScale);
@@ -143,16 +156,25 @@ export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: n
     let laserId = getNewId();
     laser.setData("id", laserId);
     laser.setData("playerOwned", unit.playerOwned);
+    laser.setData("offset", offset);
     laser.setAlpha(0.8);
-    scene.time.delayedCall(laserLifetimeMs, () => laser.destroy());
+    laserComponents.push(laser);
+    scene.time.delayedCall(laserLifetimeMs, () => {
+        laser.destroy();
+        delete unit.otherAttachements["laser"];
+    });
 
     // Laser is made up of a bunch of individual bullets. Arcade physics doesn't let you rotate rectangle colliders, so this is an alternative.
     for (let i = 0; i < laserScale; i++) {
-        let bulletPos = laserOrigin.clone().add(laserDir.clone().scale((i + 1) * 16));
+        let bulletOffset = (i + 1) * 16;
+        let bulletPos = laserOrigin.clone().add(laserDir.clone().scale(bulletOffset));
         let bullet = createBullet(unit.playerOwned, bulletPos, scene, unit, null, Phaser.Math.Vector2.ZERO, laserLifetimeMs);
         bullet.setData("isAOE", true);
         bullet.setData("id", laserId);
+        bullet.setData("offset", offset + bulletOffset);
         bullet.setAlpha(0);
+        laserComponents.push(bullet);
     }
+    unit.otherAttachements["laser"] = laserComponents;
     return laser;
 }

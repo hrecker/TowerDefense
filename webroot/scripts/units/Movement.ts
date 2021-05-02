@@ -178,9 +178,9 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, 
     let targetRotationAngle = homingDir.angle();
 
     // If the unit only needs line of sight and it has it, don't need to move any more.
-    // Ghost projectiles mean the unit essentially always has line of sight.
+    // Ghost projectiles mean the unit essentially always has line of sight, as does a laser weapon.
     let lastPathTarget = unit.path[unit.path.length - 1];
-    let hasLOS = onlyNeedLOS && (hasMod(unit, ModType.GHOST_PROJECTILES) ||
+    let hasLOS = onlyNeedLOS && (hasMod(unit, ModType.GHOST_PROJECTILES) || unit.weapon == "laser" ||
             checkLineOfSight(unit, lastPathTarget,
             determineLineOfSightWidth(unit), roomScene, debugGraphics, targetId));
     if (hasLOS) {

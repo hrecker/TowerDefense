@@ -52,6 +52,9 @@ export type Unit = {
     // this unit's movement). If created by a mod, they will be indexed by modId.
     // Otherwise they will be stored under index nullModId (-1).
     attachedObjects: { [modId: number]: Phaser.GameObjects.GameObject[] }
+    // Other objects that should be attached to this Unit, but shouldn't track
+    // with simple movement
+    otherAttachements: { [attachmentKey: string]: any };
 }
 
 /** Store unit json data for creating units */
@@ -88,7 +91,8 @@ export function loadUnitJson(unitJson) {
             timeSincePathfindMs: 10000, // Set to a high number so the unit doesn't wait for first pathfind
             defaultMods: unitProps["defaultMods"],
             mods: {},
-            attachedObjects: attached
+            attachedObjects: attached,
+            otherAttachements: {}
         };
     };
 }
