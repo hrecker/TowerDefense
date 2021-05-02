@@ -11,7 +11,6 @@
         "weaponDelay": 1500,
         "tooltip": "Laser",
         "incompatibleMods": [
-            "PROJECTILE_SCALE",
             "GHOST_PROJECTILES",
             "EXPLODING_PROJECTILES"
         ]

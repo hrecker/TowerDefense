@@ -111,3 +111,10 @@ export function destroyMod(mod: Mod) {
         delete mod.unit.attachedObjects[mod.id];
     }
 }
+
+/** Check if a given weapon and mod are compatible */
+export function weaponAndModCompatible(weapon: string, modType: string, scene: RoomScene) {
+    //TODO this is really inefficient, iterating every time rather than using a table/cache
+    let incompatibleMods = scene.cache.json.get("shipWeapons")[weapon]["incompatibleMods"];
+    return !incompatibleMods || !incompatibleMods.includes(modType);
+}

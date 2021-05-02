@@ -1,17 +1,14 @@
 import { hasMod, Unit } from "../model/Units";
-import { ModType } from "../model/Mods";
+import { ModType, weaponAndModCompatible } from "../model/Mods";
 import { RoomScene } from "../scenes/RoomScene";
 import { getRandomArrayElements } from "../util/Util";
 import { setActiveShipWeapon, setActiveShipMods } from "../state/RoomState";
 
 export function randomizeShipMods(weapon: string, numActive: number, roomScene: RoomScene) {
     let modOptions = Object.keys(roomScene.cache.json.get("shipMods"));
-    let incompatibleMods = roomScene.cache.json.get("shipWeapons")[weapon]["incompatibleMods"];
-    if (incompatibleMods) {
-        modOptions = modOptions.filter(mod => {
-            return !incompatibleMods.includes(mod);
-        });
-    }
+    modOptions = modOptions.filter(mod => {
+        return weaponAndModCompatible(weapon, mod, roomScene);
+    });
     setActiveShipMods(getRandomArrayElements(modOptions, numActive));
 }
 

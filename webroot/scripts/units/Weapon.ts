@@ -1,4 +1,4 @@
-import { ModType } from "../model/Mods";
+import { ModType, weaponAndModCompatible } from "../model/Mods";
 import { hasMod, Unit } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 import { getNewId } from "../state/IdState";
@@ -37,7 +37,7 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
                 createExplosion(unit.playerOwned, unit.gameObj.body.center, scene, 64, "zapperExplosion", explosionLifetimeMs / 2);
                 break;
             case "laser":
-                createLaser(unit.playerOwned, unit.gameObj.body.center, unit.gameObj.width / 3, unit.gameObj.rotation, scene);
+                createLaser(unit, unit.gameObj.body.center, unit.gameObj.width / 3, unit.gameObj.rotation, scene);
                 break;
         }
         targets.forEach(target => {
@@ -69,10 +69,10 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
     let bullet = scene.physics.add.image(position.x, position.y, getBulletName(isPlayerOwned));
     getBulletGroup(isPlayerOwned, scene).add(bullet);
     // ghost projectiles pass through obstacles, so don't add them to the projectile physics group
-    if (!hasMod(unit, ModType.GHOST_PROJECTILES)) {
+    if (!hasMod(unit, ModType.GHOST_PROJECTILES) || !weaponAndModCompatible(unit.weapon, ModType.GHOST_PROJECTILES, scene)) {
         scene.getProjectileGroup().add(bullet);
     }
-    if (hasMod(unit, ModType.EXPLODING_PROJECTILES)) {
+    if (hasMod(unit, ModType.EXPLODING_PROJECTILES) && weaponAndModCompatible(unit.weapon, ModType.EXPLODING_PROJECTILES, scene)) {
         bullet.setData("exploding", true);
     }
     bullet.setData("isBullet", true);
@@ -80,7 +80,7 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
     bullet.setData("playerOwned", isPlayerOwned);
     bullet.body.setCircle(8);
     bullet.setName(getBulletName(isPlayerOwned));
-    if (hasMod(unit, ModType.PROJECTILE_SCALE)) {
+    if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
         bullet.setScale(unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale);
     }
     if (!velocity) {
@@ -127,25 +127,29 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
 
 const laserScale = 25;
 const laserLifetimeMs = 600;
-export function createLaser(playerOwned: boolean, position: Phaser.Math.Vector2, offset: number, angle: number, scene: RoomScene) {
+export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: number, angle: number, scene: RoomScene) {
     //TODO laser colors for each side
     let laserDir = Phaser.Math.Vector2.RIGHT.clone().rotate(angle);
     let laserOrigin = laserDir.clone().scale(offset).add(position);
     // Laser image is not connected to physics
     let laser = scene.add.image(laserOrigin.x, laserOrigin.y, "laser").setOrigin(0, 0.5);
     laser.setRotation(angle);
-    laser.setScale(laserScale, 1);
+    let yScale = 1;
+    if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
+        yScale = unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale;
+    }
+    laser.setScale(laserScale, yScale);
     laser.setData("isAOE", true);
     let laserId = getNewId();
     laser.setData("id", laserId);
-    laser.setData("playerOwned", playerOwned);
+    laser.setData("playerOwned", unit.playerOwned);
     laser.setAlpha(0.8);
     scene.time.delayedCall(laserLifetimeMs, () => laser.destroy());
 
     // Laser is made up of a bunch of individual bullets. Arcade physics doesn't let you rotate rectangle colliders, so this is an alternative.
     for (let i = 0; i < laserScale; i++) {
         let bulletPos = laserOrigin.clone().add(laserDir.clone().scale((i + 1) * 16));
-        let bullet = createBullet(playerOwned, bulletPos, scene, null, null, Phaser.Math.Vector2.ZERO, laserLifetimeMs);
+        let bullet = createBullet(unit.playerOwned, bulletPos, scene, unit, null, Phaser.Math.Vector2.ZERO, laserLifetimeMs);
         bullet.setData("isAOE", true);
         bullet.setData("id", laserId);
         bullet.setAlpha(0);
