@@ -6,6 +6,7 @@ import { createExplosion, projectileNames } from "../units/Weapon";
 
 let activeOverlaps: { [id: string]: number } = {};
 let currentFrameOverlaps: { [id: string]: boolean } = {};
+let lastFrameOverlaps: { [id: string]: boolean } = {};
 
 // How many frames of constant overlap before triggering overlap again
 // This is necessary so that homing units that are constantly overlapping
@@ -14,11 +15,15 @@ const framesToReOverlap = 60;
 
 /** Update which objects are currently overlapping/colliding */
 export function updateFrameOverlaps() {
+    // Allow overlap within the last 2 frames to count as continuous overlap.
+    // This handles cases where this method isn't always called before/after
+    // the collision handling methods.
     Object.keys(activeOverlaps).forEach(overlapId => {
-        if (!currentFrameOverlaps[overlapId]) {
+        if (!currentFrameOverlaps[overlapId] && !lastFrameOverlaps[overlapId]) {
             activeOverlaps[overlapId] = 0;
         }
     });
+    lastFrameOverlaps = JSON.parse(JSON.stringify(currentFrameOverlaps));
     currentFrameOverlaps = {};
 }
 
