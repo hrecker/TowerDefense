@@ -72,7 +72,9 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
     } else if (projectileNames.includes(obj2.name)) {
         proj = obj2;
     }
+    let projId;
     if (proj && proj.getData("id")) {
+        projId = proj.getData("id");
         projectileOnHit(proj, this);
     } else {
         // If bullet isn't defined or has no id, it has already hit something. In that case,
@@ -86,7 +88,7 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
         unit = this.getUnit(obj2.getData("id"));
     }
 
-    let overlapId = getOverlapId(unit, { id: proj.getData("id") });
+    let overlapId = getOverlapId(unit, { id: projId });
     if (shouldSkipCurrentOverlap(overlapId)) {
         currentFrameOverlaps[overlapId] = true;
         return;
