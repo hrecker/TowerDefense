@@ -2,7 +2,7 @@ import { ModType } from "../model/Mods";
 import { Unit, takeDamage, hasMod } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 import { WithId } from "../state/IdState";
-import { createExplosion, projectileNames } from "../units/Weapon";
+import { createExplosion, getDamageDiff, projectileNames } from "../units/Weapon";
 
 let activeOverlaps: { [id: string]: number } = {};
 let currentFrameOverlaps: { [id: string]: boolean } = {};
@@ -73,8 +73,10 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
         proj = obj2;
     }
     let projId;
+    let damageDiff;
     if (proj && proj.getData("id")) {
         projId = proj.getData("id");
+        damageDiff = proj.getData("damageDiff");
         projectileOnHit(proj, this);
     } else {
         // If bullet isn't defined or has no id, it has already hit something. In that case,
@@ -96,9 +98,12 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
     currentFrameOverlaps[overlapId] = true;
     activeOverlaps[overlapId] = 1;
 
-    //TODO different damage per weapon and per modifier
     if (unit) {
-        takeDamage(unit, 1);
+        let damage = 1;
+        if (damageDiff) {
+            damage += damageDiff;
+        }
+        takeDamage(unit, damage);
     }
 }
 
@@ -124,15 +129,18 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
 
     //TODO ship subordinate units
     let ship = unit1;
+    let other = unit2;
     if (unit2.name == "ship") {
         ship = unit2;
+        other = unit1;
     }
 
     if (hasMod(unit1, ModType.NO_CONTACT_DAMAGE) || hasMod(unit2, ModType.NO_CONTACT_DAMAGE)) {
         return;
     }
 
-    takeDamage(ship, 1);
+    let damage = 1 + getDamageDiff(other);
+    takeDamage(ship, damage);
 }
 
 /** Handle projectiles that need special behavior when hitting the room geometry (destroy, bounce, explode, etc.) */

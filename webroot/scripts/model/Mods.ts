@@ -39,6 +39,8 @@ export type ModProps = {
     currentTargetId?: number,
     // ModType.PROJECTILE_SCALE
     projectileScale?: number
+    // ModType.DAMAGE_BUFF
+    damageDiff?: number
 }
 
 /** Types of Mods that can be created */
@@ -49,7 +51,8 @@ export enum ModType {
     PROJECTILE_SCALE = "PROJECTILE_SCALE",
     GHOST_PROJECTILES = "GHOST_PROJECTILES",
     EXPLODING_PROJECTILES = "EXPLODING_PROJECTILES",
-    NO_CONTACT_DAMAGE = "NO_CONTACT_DAMAGE"
+    NO_CONTACT_DAMAGE = "NO_CONTACT_DAMAGE",
+    DAMAGE_BUFF = "DAMAGE_BUFF"
 };
 
 /** Create a Mod attached to a Unit. The passed in mod should

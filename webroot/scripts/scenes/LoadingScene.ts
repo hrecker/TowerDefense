@@ -46,6 +46,7 @@ export class LoadingScene extends Phaser.Scene {
         this.load.json("units", "assets/units/units.json");
         this.load.json("shipMods", "assets/units/shipMods.json");
         this.load.json("shipWeapons", "assets/units/shipWeapons.json");
+        this.load.json("buffs", "assets/units/buffs.json");
     }
 
     create() {

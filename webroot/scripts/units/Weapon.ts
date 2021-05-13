@@ -87,6 +87,8 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
     if (hasMod(unit, ModType.EXPLODING_PROJECTILES) && weaponAndModCompatible(unit.name, unit.weapon, ModType.EXPLODING_PROJECTILES, scene)) {
         bullet.setData("exploding", true);
     }
+    let damageDiff = getDamageDiff(unit, true, scene);
+    bullet.setData("damageDiff", damageDiff);
     bullet.setData("isBullet", true);
     bullet.setData("id", getNewId());
     bullet.setData("playerOwned", isPlayerOwned);
@@ -124,6 +126,7 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
     explosion.setData("id", getNewId());
     explosion.setData("playerOwned", playerOwned);
     explosion.setAlpha(0.3);
+    //TODO allow damage mods for explosions too?
     if (!size) {
         size = defaultExplosionSize;
     }
@@ -151,6 +154,7 @@ export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: n
     if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.name, unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
         yScale = unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale;
     }
+    let damageDiff = getDamageDiff(unit, true, scene);
     laser.setScale(laserScale, yScale);
     laser.setData("isAOE", true);
     let laserId = getNewId();
@@ -173,8 +177,22 @@ export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: n
         bullet.setData("id", laserId);
         bullet.setData("offset", offset + bulletOffset);
         bullet.setAlpha(0);
+        if (damageDiff != 0) {
+            bullet.setData("damageDiff", damageDiff);
+        }
         laserComponents.push(bullet);
     }
     unit.otherAttachements["laser"] = laserComponents;
     return laser;
+}
+
+/** Get damage diff from the given unit's mods */
+export function getDamageDiff(unit: Unit, checkWeapon?: boolean, scene?: RoomScene) {
+    let damageDiff = 0;
+    if (hasMod(unit, ModType.DAMAGE_BUFF) && (!checkWeapon || weaponAndModCompatible(unit.name, unit.weapon, ModType.DAMAGE_BUFF, scene))) {
+        unit.mods[ModType.DAMAGE_BUFF].forEach(damageBuffMod => {
+            damageDiff += damageBuffMod.props.damageDiff;
+        });
+    }
+    return damageDiff;
 }
