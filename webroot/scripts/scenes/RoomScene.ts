@@ -6,7 +6,7 @@ import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods, purgeGlobalMods, createGlobalMod } from "../model/Mods";
 import { addShopSelectionListener, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
-import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus, getActiveShipMods, getActiveShipWeapon } from "../state/RoomState";
+import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus, getActiveShipMods, getActiveShipWeapon, setRoomScene, clearRoomShopBuffs, resetRoom } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
 
 let ship: Unit;
@@ -54,6 +54,7 @@ export class RoomScene extends Phaser.Scene {
     }
 
     create() {
+        resetRoom(this);
         this.cameras.main.setBackgroundColor(backgroundColor);
         this.startRoom("room" + roomNum);
         shopSelectionHover = this.add.image(-1000, -1000, "target");
@@ -67,9 +68,6 @@ export class RoomScene extends Phaser.Scene {
                 setInvalidUnitPlacementReason(lastInvalidPlacementReason);
             }
         });
-        //TODO this may not be wanted always? Right now just clears mods on each room start.
-        purgeGlobalMods();
-        //createGlobalMod(true, ModType.DAMAGE_BUFF, { damageDiff: 1}, this);
     }
 
     // Create a physics group for units that does not reset drag when adding to the group

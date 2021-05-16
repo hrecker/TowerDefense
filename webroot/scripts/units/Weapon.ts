@@ -95,7 +95,11 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
     bullet.body.setCircle(8);
     bullet.setName(getBulletName(isPlayerOwned));
     if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.name, unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
-        bullet.setScale(unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale);
+        let scale = 1;
+        getAllModsOfType(unit, ModType.PROJECTILE_SCALE).forEach(mod => {
+            scale = Math.max(scale, mod.props.projectileScale);
+        });
+        bullet.setScale(scale);
     }
     if (!velocity) {
         velocity = target.clone().subtract(unit.gameObj.body.center).normalize().scale(bulletSpeed);
@@ -156,7 +160,9 @@ export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: n
     laser.setRotation(angle);
     let yScale = 1;
     if (hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.name, unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
-        yScale = unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale;
+        getAllModsOfType(unit, ModType.PROJECTILE_SCALE).forEach(mod => {
+            yScale = Math.max(yScale, mod.props.projectileScale);
+        });
     }
     let damageDiff = getDamageDiff(unit, true, scene);
     laser.setScale(laserScale, yScale);

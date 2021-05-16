@@ -1,3 +1,6 @@
+import { purgeGlobalMods } from "../model/Mods";
+import { RoomScene } from "../scenes/RoomScene";
+
 let timerMs: number;
 let timerMsCallbacks = [];
 
@@ -8,12 +11,43 @@ export enum RoomStatus {
     DEFEAT
 };
 
+let roomScene: RoomScene;
 let roomStatus: RoomStatus;
 let roomStatusCallbacks = [];
 let activeShipMods: string[];
 let shipModCallbacks = [];
 let activeShipWeapon: string;
 let shipWeaponCallbacks = [];
+let activeRoomShopBuffs: string[] = [];
+let roomResetCallbacks = [];
+
+export function resetRoom(scene: RoomScene) {
+    roomScene = scene;
+    activeRoomShopBuffs = [];
+    //TODO this may not be wanted always? Right now just clears mods on each room start.
+    purgeGlobalMods();
+    roomResetCallbacks.forEach(callback => 
+        callback.callback(callback.scene));
+}
+
+export function addRoomResetListener(callback, scene) {
+    roomResetCallbacks.push({ 
+        callback: callback,
+        scene: scene
+    });
+}
+
+export function getRoomScene() {
+    return roomScene;
+}
+
+export function addRoomShopBuff(buff: string) {
+    activeRoomShopBuffs.push(buff);
+}
+
+export function isRoomShopBuffActive(buff: string) {
+    return activeRoomShopBuffs.includes(buff);
+}
 
 export function setTimerMs(timeLeft: number) {
     if (timerMs == timeLeft) {

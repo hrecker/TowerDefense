@@ -1,8 +1,9 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
-import { setShopSelection, addInvalidUnitPlacementListener } from "../state/UIState";
+import { setShopSelection, addInvalidUnitPlacementListener, setInvalidUnitPlacementReason } from "../state/UIState";
 import { addTimerMsListener, addRoomStatusListener, RoomStatus, 
-    getActiveShipMods, addShipModListener, addShipWeaponListener, getActiveShipWeapon } from "../state/RoomState";
-import { getResources, addCurrentResourcesListener } from "../state/ResourceState";
+    getActiveShipMods, addShipModListener, addShipWeaponListener, getActiveShipWeapon, getRoomScene, getRoomStatus, isRoomShopBuffActive, addRoomShopBuff, addRoomResetListener } from "../state/RoomState";
+import { getResources, addCurrentResourcesListener, addResources } from "../state/ResourceState";
+import { createGlobalMod, ModType } from "../model/Mods";
 
 const unitSelectionBoxWidth = 192;
 const shopSelectionBoxDefaultColor = 0x6400b5;
@@ -18,11 +19,17 @@ let roomStatusText: Phaser.GameObjects.Text;
 let timerText: Phaser.GameObjects.Text;
 let invalidPlacementText: Phaser.GameObjects.Text;
 let invalidPlacementTextHideEvent: Phaser.Time.TimerEvent;
+
 let shipWeaponIcon: Phaser.GameObjects.Image;
 let shipModIcons: Phaser.GameObjects.Image[] = [];
 let shipModTooltipBackground: Phaser.GameObjects.Rectangle;
 let shipModTooltipText: Phaser.GameObjects.Text;
 let shipModTooltip: Phaser.GameObjects.Group;
+
+let buffIcons: Phaser.GameObjects.Image[] = [];
+let buffTooltipBackground: Phaser.GameObjects.Rectangle;
+let buffTooltipText: Phaser.GameObjects.Text;
+let buffTooltip: Phaser.GameObjects.Group;
 
 // UI displayed over RoomScene
 export class RoomUIScene extends Phaser.Scene {
@@ -37,6 +44,8 @@ export class RoomUIScene extends Phaser.Scene {
     }
 
     create() {
+        addRoomResetListener(this.onRoomReset, this);
+
         let shopBackground = this.add.rectangle(unitSelectionCenterX, this.game.renderer.height / 2, 
             unitSelectionBoxWidth, this.game.renderer.height, 0x000000);
         shopBackground.setInteractive();
@@ -48,13 +57,13 @@ export class RoomUIScene extends Phaser.Scene {
         addCurrentResourcesListener(this.updateCurrentResourcesText, this);
         this.updateCurrentResourcesText(getResources());
 
-        roomStatusText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 100, "Status Text", { fontSize: "18px" }).setOrigin(0.5);
-        timerText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 50, "99:99", { fontSize: "32px" }).setOrigin(0.5);
+        roomStatusText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 80, "Status Text", { fontSize: "18px" }).setOrigin(0.5);
+        timerText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 40, "99:99", { fontSize: "32px" }).setOrigin(0.5);
         addTimerMsListener(this.updateTimerText, this);
         addRoomStatusListener(this.updateRoomStatus, this);
         this.updateRoomStatus(RoomStatus.COUNTDOWN);
 
-        invalidPlacementText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 200, "Invalid placement", { fontSize: "16px" }).setOrigin(0.5);
+        invalidPlacementText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 130, "Invalid placement", { fontSize: "16px" }).setOrigin(0.5);
         invalidPlacementText.setWordWrapWidth(unitSelectionBoxWidth - 20);
         invalidPlacementText.setVisible(false);
         addInvalidUnitPlacementListener(this.showInvalidUnitPlacement, this);
@@ -71,6 +80,51 @@ export class RoomUIScene extends Phaser.Scene {
             });
             this.add.text(unitSelectionCenterX, 44 + i * 64, purchasableUnits[i].name).setOrigin(0.5);
             this.add.text(unitSelectionCenterX, 64 + i * 64, purchasableUnits[i].price.toString()).setOrigin(0.5);
+        }
+
+        // Buff menu
+        buffTooltipBackground = this.add.rectangle(unitSelectionCenterX, this.game.renderer.height - 172, unitSelectionBoxWidth - 10, 24, 0xc4c4c4, 1);
+        buffTooltipText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 172, "Sample text", { color: "#000" }).setOrigin(0.5);
+        buffTooltip = this.add.group([buffTooltipBackground, buffTooltipText]);
+        buffTooltip.setVisible(false);
+        let buffMargin = 60;
+        let buffNames = Object.keys(this.cache.json.get("buffs"));
+        let firstBuffX = unitSelectionCenterX - 60;
+        for (let i = 0; i < buffNames.length; i++) {
+            let buffIcon = this.add.image(firstBuffX + (buffMargin * i), this.game.renderer.height - 230, buffNames[i]);
+            buffIcons.push(buffIcon);
+            this.add.text(firstBuffX + (buffMargin * i), this.game.renderer.height - 195, this.cache.json.get("buffs")[buffNames[i]]["price"]).setOrigin(0.5);
+            buffIcon.setInteractive();
+            buffIcon.on("pointerover", () => {
+                buffTooltip.setVisible(true);
+                buffTooltipText.setText(this.cache.json.get("buffs")[buffNames[i]]["tooltip"]);
+                buffTooltipBackground.displayWidth = buffTooltipText.width + 4;
+            });
+            buffIcon.on("pointerout", () => {
+                buffTooltip.setVisible(false);
+            });
+            buffIcon.on("pointerdown", () => {
+                // Apply the buff
+                // Check that room is active and there are enough resources
+                if (getRoomStatus() == RoomStatus.DEFEAT || getRoomStatus() == RoomStatus.VICTORY) {
+                    setInvalidUnitPlacementReason("Room is no longer active!");
+                    return;
+                }
+                // Prevent multiple of one buff in same room
+                if (isRoomShopBuffActive(buffNames[i])) {
+                    setInvalidUnitPlacementReason("Buff already active!");
+                    return;
+                }
+                let price = this.cache.json.get("buffs")[buffNames[i]]["price"];
+                if (price > getResources()) {
+                    setInvalidUnitPlacementReason("Need more resources!");
+                    return;
+                }
+                addResources(-price);
+                createGlobalMod(true, ModType[buffNames[i]], this.cache.json.get("buffs")[buffNames[i]]["props"], getRoomScene());
+                addRoomShopBuff(buffNames[i]);
+                buffIcon.setAlpha(0.25);
+            });
         }
 
         // Weapon icon
@@ -93,6 +147,12 @@ export class RoomUIScene extends Phaser.Scene {
         shipModTooltip = this.add.group([shipModTooltipBackground, shipModTooltipText]);
         shipModTooltip.setVisible(false);
         addShipModListener(this.setShipModIcons, this);
+    }
+
+    onRoomReset() {
+        buffIcons.forEach(buffIcon => {
+            buffIcon.setAlpha(1);
+        })
     }
 
     selectShopItem(index) {

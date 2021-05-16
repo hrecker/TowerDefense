@@ -126,7 +126,7 @@ export function purgeGlobalMods() {
 //TODO remove the type key the list if there are no more of the given type? Probably doesn't matter
 function purgeModList(modList: { [type: string]: Mod[] }) {
     for (let modType in modList) {
-        for (let i = 0; i < modList[modType].length; i++) {
+        for (let i = modList[modType].length - 1; i >= 0; i--) {
             destroyMod(modList[modType][i]);
         }
     }

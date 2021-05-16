@@ -1,5 +1,5 @@
 import { Mod, ModType } from "../model/Mods";
-import { Unit, hasMod } from "../model/Units";
+import { Unit, hasMod, getAllModsOfType } from "../model/Units";
 import { RoomScene, tileWidthPixels } from "../scenes/RoomScene";
 import { getTargetPos } from "./AI";
 
@@ -72,9 +72,12 @@ const pathfindIntervalMs = 500;
  */
 export function determineLineOfSightWidth(unit: Unit) {
     let los = defaultLineOfSightWidth;
-    //TODO handle different weapon/mod types
     if (hasMod(unit, ModType.PROJECTILE_SCALE)) {
-        los *= unit.mods[ModType.PROJECTILE_SCALE][0].props.projectileScale;
+        let scale = 1;
+        getAllModsOfType(unit, ModType.PROJECTILE_SCALE).forEach(mod => {
+            scale = Math.max(scale, mod.props.projectileScale);
+        });
+        los *= scale;
     }
     return los;
 }

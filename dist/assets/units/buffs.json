@@ -3,12 +3,18 @@
         "props": {
             "projectileScale": 2
         },
-        "tooltip": "Big projectiles"
+        "tooltip": "Big projectiles",
+        "price": 50
     },
     "DAMAGE_BUFF": {
         "props": {
             "damageDiff": 1
         },
-        "tooltip": "+1 damage per hit"
+        "tooltip": "+1 damage per hit",
+        "price": 100
+    },
+    "GHOST_PROJECTILES": {
+        "tooltip": "Ghost projectiles",
+        "price": 50
     }
 }
