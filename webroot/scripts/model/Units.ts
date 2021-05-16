@@ -1,5 +1,5 @@
 import { RoomScene } from "../scenes/RoomScene";
-import { createUnitMod, Mod, ModProps, ModType } from "./Mods";
+import { createUnitMod, getGlobalModsOfType, globalHasMod, Mod, ModProps, ModType } from "./Mods";
 import { flickerGameObject } from "../util/Util";
 import { getNewId } from "../state/IdState";
 
@@ -275,5 +275,14 @@ export function takeDamage(unit: Unit, damage: number) {
 
 /** Check if unit has an active mod of the given type */
 export function hasMod(unit: Unit, type: ModType): boolean {
-    return unit && unit.mods[type] && unit.mods[type].length > 0;
+    return unit && ((unit.mods[type] && unit.mods[type].length > 0) || globalHasMod(unit.playerOwned, type));
+}
+
+export function getAllModsOfType(unit: Unit, type: ModType): Mod[] {
+    let allMods = [];
+    if (unit.mods[type]) {
+        allMods = allMods.concat(unit.mods[type]);
+    }
+    allMods = allMods.concat(getGlobalModsOfType(unit.playerOwned, type));
+    return allMods;
 }

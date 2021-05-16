@@ -20,15 +20,12 @@ export function moveUnit(unit: Unit, targetUnit: Unit, roomScene: RoomScene, del
     if (target) {
         // Apply movement mods
         if (hasMod(unit, ModType.DODGE_ENEMIES)) {
-            //TODO probably shouldn't even be possible to have multiple DODGE_ENEMIES mods...
-            //TODO maybe some kind of assert that prevents duplicates for certain mod types?
-            unit.mods[ModType.DODGE_ENEMIES].forEach(mod => {
-                if (mod.props.currentCooldownMs > 0) {
-                    mod.props.currentCooldownMs -= delta;
-                } else if (dodgeNearestEnemy(unit, mod, roomScene)) {
-                    mod.props.currentCooldownMs = mod.props.dodgeCooldownMs;
-                }
-            });
+            let mod = unit.mods[ModType.DODGE_ENEMIES][0];
+            if (mod.props.currentCooldownMs > 0) {
+                mod.props.currentCooldownMs -= delta;
+            } else if (dodgeNearestEnemy(unit, mod, roomScene)) {
+                mod.props.currentCooldownMs = mod.props.dodgeCooldownMs;
+            }
         }
 
         switch (unit.movement) {

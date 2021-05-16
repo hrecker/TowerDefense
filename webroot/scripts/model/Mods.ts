@@ -4,6 +4,8 @@ import { Unit } from "./Units";
 
 // All active mods that have a duration
 let allTimebasedMods: Mod[] = [];
+let playerOwnedMods: { [type: string]: Mod[] } = {};
+let nonPlayerOwnedMods: { [type: string]: Mod[] } = {};
 
 /** A Mod, which affects Units stats/abilities/movement. These can be attached
  * to a single unit, affect all units, or affect a subset with a filter.
@@ -14,9 +16,11 @@ export type Mod = {
     startTime: number,
     // Unit this mod is attached to, if applicable
     unit?: Unit,
-    // filter should return true for Units that it applies to
-    // Only necessary for global/semi-global mods
-    filter?: (unit: Unit) => boolean,
+    // TODO is more fine-grained filter logic necessary here?
+    // Whether this is a global mod affecting all player-owned or all non-player-owned units
+    // Mods that are attached to a single unit should leave each of these undefined or set to false
+    isPlayerOwned?: boolean,
+    isNonPlayerOwned?: boolean,
     // Properties of this mod
     props: ModProps
 };
@@ -60,28 +64,47 @@ export enum ModType {
  * connect it to the unit and instantiate necessary GameObjects.
  */
 export function createUnitMod(unit: Unit, type: ModType, props: ModProps, scene: RoomScene) {
+    let mod = createMod(type, props, scene);
+    mod.unit = unit;
+    if (mod.props.attachSprite) {
+        let attach = scene.add.image(unit.gameObj.body.center.x, unit.gameObj.body.center.y, mod.props.attachSprite);
+        unit.attachedObjects[mod.id] = [attach];
+    }
+    addModToList(mod, unit.mods);
+}
+
+export function createGlobalMod(playerOwned: boolean, type: ModType, props: ModProps, scene: RoomScene) {
+    let mod = createMod(type, props, scene);
+    if (playerOwned) {
+        addModToList(mod, playerOwnedMods);
+        mod.isPlayerOwned = true;
+    } else {
+        addModToList(mod, nonPlayerOwnedMods);
+        mod.isNonPlayerOwned = true;
+    }
+}
+
+function createMod(type: ModType, props: ModProps, scene: RoomScene) {
     if (!props) {
         props = {};
     }
     let mod: Mod = {
         id: getNewId(),
-        unit: unit,
         startTime: scene.getSceneTime(),
         type: type,
         props: props
     };
-    mod.unit = unit;
     if (mod.props.duration) {
         allTimebasedMods.push(mod);
     }
-    if (mod.props.attachSprite) {
-        let attach = scene.add.image(unit.gameObj.body.center.x, unit.gameObj.body.center.y, mod.props.attachSprite);
-        unit.attachedObjects[mod.id] = [attach];
+    return mod;
+}
+
+function addModToList(mod: Mod, list: { [type: string]: Mod[] }) {
+    if (!list[mod.type]) {
+        list[mod.type] = [];
     }
-    if (!unit.mods[type]) {
-        unit.mods[type] = [];
-    }
-    unit.mods[type].push(mod);
+    list[mod.type].push(mod);
 }
 
 /** Destroy mods that expired based on the current time */
@@ -95,24 +118,67 @@ export function purgeExpiredMods(time: number) {
     }
 }
 
+export function purgeGlobalMods() {
+    purgeModList(playerOwnedMods);
+    purgeModList(nonPlayerOwnedMods);
+}
+
+//TODO remove the type key the list if there are no more of the given type? Probably doesn't matter
+function purgeModList(modList: { [type: string]: Mod[] }) {
+    for (let modType in modList) {
+        for (let i = 0; i < modList[modType].length; i++) {
+            destroyMod(modList[modType][i]);
+        }
+    }
+}
+
 /** Destroy mod, remove from unit and destroy GameObjects if necessary */
-//TODO handle mods not attached to units here (global/semi-global)
 export function destroyMod(mod: Mod) {
-    // Remove the mod from the unit's list
-    //TODO remove the type key from unit.mods if there are no more of the given type? Probably doesn't matter
-    for (let i = 0; i < mod.unit.mods[mod.type].length; i++) {
-        if (mod.unit.mods[mod.type][i].id == mod.id) {
-            mod.unit.mods[mod.type].splice(i, 1);
-            break;
+    if (mod.unit) {
+        // Remove the mod from the unit's list
+        removeModFromList(mod.unit.mods, mod);
+        // Destroy any attached gameobjects belonging to the mod
+        if (mod.unit.attachedObjects[mod.id]) {
+            for (let i = 0; i < mod.unit.attachedObjects[mod.id].length; i++) {
+                mod.unit.attachedObjects[mod.id][i].destroy();
+            }
+            delete mod.unit.attachedObjects[mod.id];
+        }
+    } else if (mod.isPlayerOwned) {
+        removeModFromList(playerOwnedMods, mod);
+    } else if (mod.isNonPlayerOwned) {
+        removeModFromList(nonPlayerOwnedMods, mod);
+    }
+}
+
+function removeModFromList(modList: { [type: string]: Mod[] }, mod) {
+    for (let i = 0; i < modList[mod.type].length; i++) {
+        if (modList[mod.type][i].id == mod.id) {
+            modList[mod.type].splice(i, 1);
+            return true;
         }
     }
-    // Destroy any attached gameobjects belonging to the mod
-    if (mod.unit.attachedObjects[mod.id]) {
-        for (let i = 0; i < mod.unit.attachedObjects[mod.id].length; i++) {
-            mod.unit.attachedObjects[mod.id][i].destroy();
-        }
-        delete mod.unit.attachedObjects[mod.id];
+    return false;
+}
+
+/** Check if a global mod of the given type applies to player-owned/non-player-owned units */
+export function globalHasMod(playerOwned: boolean, type: ModType) {
+    let list = playerOwnedMods;
+    if (!playerOwned) {
+        list = nonPlayerOwnedMods;
     }
+    return list && list[type] && list[type].length > 0;
+}
+
+/** Check if a global mod of the given type applies to player-owned/non-player-owned units */
+export function getGlobalModsOfType(playerOwned: boolean, type: ModType) {
+    let list = [];
+    if (playerOwned && playerOwnedMods[type]) {
+        list = playerOwnedMods[type];
+    } else if (!playerOwned && nonPlayerOwnedMods[type]) {
+        list = nonPlayerOwnedMods[type];
+    }
+    return list;
 }
 
 /** Check if a given weapon and mod are compatible */

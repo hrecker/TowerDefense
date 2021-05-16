@@ -1,5 +1,5 @@
 import { ModType, weaponAndModCompatible } from "../model/Mods";
-import { hasMod, Unit } from "../model/Units";
+import { getAllModsOfType, hasMod, Unit } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 import { getNewId } from "../state/IdState";
 
@@ -190,7 +190,7 @@ export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: n
 export function getDamageDiff(unit: Unit, checkWeapon?: boolean, scene?: RoomScene) {
     let damageDiff = 0;
     if (hasMod(unit, ModType.DAMAGE_BUFF) && (!checkWeapon || weaponAndModCompatible(unit.name, unit.weapon, ModType.DAMAGE_BUFF, scene))) {
-        unit.mods[ModType.DAMAGE_BUFF].forEach(damageBuffMod => {
+        getAllModsOfType(unit, ModType.DAMAGE_BUFF).forEach(damageBuffMod => {
             damageDiff += damageBuffMod.props.damageDiff;
         });
     }
