@@ -46,7 +46,7 @@ export function updateUnitWeapon(unit: Unit, target: Phaser.Math.Vector2, delta:
                 }
                 break;
             case "zapper":
-                createExplosion(unit.playerOwned, unit.gameObj.body.center, scene, 64, "zapperExplosion", explosionLifetimeMs / 2);
+                createExplosion(unit.playerOwned, unit.gameObj.body.center, scene, 64, "zapperExplosion", explosionLifetimeMs / 2, unit);
                 break;
             case "laser":
                 createLaser(unit, unit.gameObj.body.center, unit.gameObj.width / 3, unit.gameObj.rotation, scene);
@@ -110,7 +110,7 @@ function createBullet(isPlayerOwned: boolean, position: Phaser.Math.Vector2, sce
 }
 
 const defaultExplosionSize = 32;
-export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene, size?: number, explosionName?: string, lifetimeMs?: number) {
+export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vector2, scene: RoomScene, size?: number, explosionName?: string, lifetimeMs?: number, unit?: Unit) {
     let bulletGroup = getBulletGroup(playerOwned, scene);
     if (!explosionName) {
         if (playerOwned) {
@@ -126,7 +126,11 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
     explosion.setData("id", getNewId());
     explosion.setData("playerOwned", playerOwned);
     explosion.setAlpha(0.3);
-    //TODO allow damage mods for explosions too?
+    // Allow damage mods only if explosion is directly from a unit (exploding bullets don't get a damage mod on the explosion)
+    if (unit) {
+        let damageDiff = getDamageDiff(unit, true, scene);
+        explosion.setData("damageDiff", damageDiff);
+    }
     if (!size) {
         size = defaultExplosionSize;
     }

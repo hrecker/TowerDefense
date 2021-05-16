@@ -69,6 +69,7 @@ export class RoomScene extends Phaser.Scene {
         });
         //TODO this may not be wanted always? Right now just clears mods on each room start.
         purgeGlobalMods();
+        //createGlobalMod(true, ModType.DAMAGE_BUFF, { damageDiff: 1}, this);
     }
 
     // Create a physics group for units that does not reset drag when adding to the group
