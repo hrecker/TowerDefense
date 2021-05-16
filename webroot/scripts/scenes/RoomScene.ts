@@ -4,9 +4,9 @@ import * as weapon from "../units/Weapon";
 import { handleUnitHit, handleProjectileHit, updateFrameOverlaps, handleProjectileHitGeometry } from "../units/Collision";
 import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
-import { ModType, createUnitMod, purgeExpiredMods, purgeGlobalMods, createGlobalMod } from "../model/Mods";
+import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
 import { addShopSelectionListener, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
-import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus, getActiveShipMods, getActiveShipWeapon, setRoomScene, clearRoomShopBuffs, resetRoom } from "../state/RoomState";
+import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus, getActiveShipMods, getActiveShipWeapon, resetRoom } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
 
 let ship: Unit;

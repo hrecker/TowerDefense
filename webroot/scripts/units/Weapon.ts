@@ -148,7 +148,7 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
     return explosion;
 }
 
-const laserScale = 25;
+const laserScale = 50;
 const laserLifetimeMs = 600;
 export function createLaser(unit: Unit, position: Phaser.Math.Vector2, offset: number, angle: number, scene: RoomScene) {
     //TODO laser colors for each side
