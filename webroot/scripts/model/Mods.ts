@@ -1,6 +1,6 @@
 import { RoomScene } from "../scenes/RoomScene";
 import { getNewId } from "../state/IdState";
-import { Unit } from "./Units";
+import { Unit, updateHealth } from "./Units";
 
 // All active mods that have a duration
 let allTimebasedMods: Mod[] = [];
@@ -33,7 +33,7 @@ export type ModProps = {
     attachSprite?: string,
     // properties for specific mod types:
     // Generic (may be used by multiple mod types)
-    currentCooldownMs?: number
+    currentCooldownMs?: number,
     // ModType.SHIELD
     shieldStrength?: number,
     // ModType.DODGE_ENEMIES
@@ -42,9 +42,11 @@ export type ModProps = {
     // ModType.TARGET_ENEMIES
     currentTargetId?: number,
     // ModType.PROJECTILE_SCALE
-    projectileScale?: number
+    projectileScale?: number,
     // ModType.DAMAGE_BUFF
-    damageDiff?: number
+    damageDiff?: number,
+    // ModType.HEALTH_BUFF
+    healthDiff?: number
 }
 
 /** Types of Mods that can be created */
@@ -56,7 +58,8 @@ export enum ModType {
     GHOST_PROJECTILES = "GHOST_PROJECTILES",
     EXPLODING_PROJECTILES = "EXPLODING_PROJECTILES",
     NO_CONTACT_DAMAGE = "NO_CONTACT_DAMAGE",
-    DAMAGE_BUFF = "DAMAGE_BUFF"
+    DAMAGE_BUFF = "DAMAGE_BUFF",
+    HEALTH_BUFF = "HEALTH_BUFF"
 };
 
 /** Create a Mod attached to a Unit. The passed in mod should
@@ -71,6 +74,7 @@ export function createUnitMod(unit: Unit, type: ModType, props: ModProps, scene:
         unit.attachedObjects[mod.id] = [attach];
     }
     addModToList(mod, unit.mods);
+    applyModCreationEffect(mod, unit);
 }
 
 export function createGlobalMod(playerOwned: boolean, type: ModType, props: ModProps, scene: RoomScene) {
@@ -82,6 +86,12 @@ export function createGlobalMod(playerOwned: boolean, type: ModType, props: ModP
         addModToList(mod, nonPlayerOwnedMods);
         mod.isNonPlayerOwned = true;
     }
+    Object.keys(scene.getSceneUnits()).forEach(unitId => {
+        let unit: Unit = scene.getSceneUnits()[unitId];
+        if (unit.playerOwned == playerOwned) {
+            applyModCreationEffect(mod, unit);
+        }
+    });
 }
 
 function createMod(type: ModType, props: ModProps, scene: RoomScene) {
@@ -105,6 +115,15 @@ function addModToList(mod: Mod, list: { [type: string]: Mod[] }) {
         list[mod.type] = [];
     }
     list[mod.type].push(mod);
+}
+
+// Some mods have an effect when they are first created, like a health buff
+export function applyModCreationEffect(mod: Mod, unit: Unit) {
+    switch (mod.type) {
+        case ModType.HEALTH_BUFF:
+            updateHealth(unit, unit.health + mod.props.healthDiff, unit.maxHealth + mod.props.healthDiff);
+            break;
+    }
 }
 
 /** Destroy mods that expired based on the current time */
@@ -177,6 +196,25 @@ export function getGlobalModsOfType(playerOwned: boolean, type: ModType) {
         list = playerOwnedMods[type];
     } else if (!playerOwned && nonPlayerOwnedMods[type]) {
         list = nonPlayerOwnedMods[type];
+    }
+    return list;
+}
+
+/** Get all global mods affecting either player-owned or non-player-owned units */
+export function getAllGlobalModsForUnit(playerOwned: boolean) {
+    let list = [];
+    if (playerOwned) {
+        Object.keys(playerOwnedMods).forEach(modType => {
+            playerOwnedMods[modType].forEach(mod => {
+                list.push(mod);
+            });
+        });
+    } else {
+        Object.keys(nonPlayerOwnedMods).forEach(modType => {
+            nonPlayerOwnedMods[modType].forEach(mod => {
+                list.push(mod);
+            });
+        });
     }
     return list;
 }

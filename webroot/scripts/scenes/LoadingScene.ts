@@ -30,6 +30,7 @@ export class LoadingScene extends Phaser.Scene {
         this.load.image("DAMAGE_BUFF", "assets/sprites/mods/damage_buff.png");
         this.load.image("DODGE_ENEMIES", "assets/sprites/mods/dodge_enemies.png");
         this.load.image("EXPLODING_PROJECTILES", "assets/sprites/mods/exploding_projectiles.png");
+        this.load.image("HEALTH_BUFF", "assets/sprites/mods/health_buff.png");
         this.load.image("GHOST_PROJECTILES", "assets/sprites/mods/ghost_projectiles.png");
         this.load.image("PROJECTILE_SCALE", "assets/sprites/mods/projectile_scale.png");
         this.load.image("TARGET_ENEMIES", "assets/sprites/mods/target_enemies.png");

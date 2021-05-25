@@ -1,5 +1,5 @@
 import { RoomScene } from "../scenes/RoomScene";
-import { createUnitMod, getGlobalModsOfType, globalHasMod, Mod, ModProps, ModType } from "./Mods";
+import { applyModCreationEffect, createUnitMod, getAllGlobalModsForUnit, getGlobalModsOfType, globalHasMod, Mod, ModProps, ModType } from "./Mods";
 import { flickerGameObject } from "../util/Util";
 import { getNewId } from "../state/IdState";
 
@@ -184,6 +184,11 @@ export function createUnit(name: string, location: Phaser.Types.Math.Vector2Like
         });
     }
 
+    // Apply any on-creation effects for mods applied to this unit
+    getAllGlobalModsForUnit(unit.playerOwned).forEach(mod => {
+        applyModCreationEffect(mod, unit);
+    })
+
     return unit;
 }
 
@@ -240,6 +245,29 @@ export function destroyUnit(unit: Unit) {
     });
 }
 
+/** Update the health/max health of a given unit */
+export function updateHealth(unit: Unit, newHealth: number, newMaxHealth?: number) {
+    let damaged = newHealth < unit.health;
+
+    unit.health = newHealth;
+    if (newMaxHealth) {
+        unit.maxHealth = newMaxHealth;
+    }
+
+    if (unit.health <= 0) {
+        destroyUnit(unit);
+    } else {
+        let healthFraction = unit.health / unit.maxHealth;
+        let barWidth = healthBarWidth * healthFraction;
+        unit.healthBar.setSize(barWidth, healthBarHeight);
+
+        // Flash on taking hit for some visual feedback
+        if (damaged) {
+            flickerGameObject(unit.gameObj.scene, unit.gameObj);
+        }
+    }
+}
+
 /** Cause the unit to take a certain amount of damage, and destroy it if health reaches zero. */
 export function takeDamage(unit: Unit, damage: number) {
     // Apply any shield mods
@@ -260,17 +288,7 @@ export function takeDamage(unit: Unit, damage: number) {
         return;
     }
 
-    unit.health -= damage;
-    if (unit.health <= 0) {
-        destroyUnit(unit);
-    } else {
-        let healthFraction = unit.health / unit.maxHealth;
-        let barWidth = healthBarWidth * healthFraction;
-        unit.healthBar.setSize(barWidth, healthBarHeight);
-
-        // Flash on taking hit for some visual feedback
-        flickerGameObject(unit.gameObj.scene, unit.gameObj);
-    }
+    updateHealth(unit, unit.health - damage);
 }
 
 /** Check if unit has an active mod of the given type */

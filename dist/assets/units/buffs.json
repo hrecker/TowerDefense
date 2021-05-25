@@ -13,8 +13,11 @@
         "tooltip": "+1 damage per hit",
         "price": 100
     },
-    "GHOST_PROJECTILES": {
-        "tooltip": "Ghost projectiles",
+    "HEALTH_BUFF": {
+        "props": {
+            "healthDiff": 3
+        },
+        "tooltip": "+3 health",
         "price": 50
     }
 }
