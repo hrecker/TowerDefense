@@ -3,8 +3,8 @@ import { Unit } from "../model/Units";
 // Unit selected in the UI
 let shopSelection: Unit;
 let shopSelectionCallbacks = [];
-let invalidUnitPlacementReason: string;
-let invalidUnitPlacementCallbacks = [];
+let shopMessage: string;
+let shopMessageCallbacks = [];
 
 export function setShopSelection(selection: Unit) {
     shopSelection = selection;
@@ -23,14 +23,14 @@ export function addShopSelectionListener(callback, scene) {
     });
 }
 
-export function setInvalidUnitPlacementReason(reason: string) {
-    invalidUnitPlacementReason = reason;
-    invalidUnitPlacementCallbacks.forEach(callback => 
-        callback.callback(invalidUnitPlacementReason, callback.scene));
+export function setShopMessage(message: string) {
+    shopMessage = message;
+    shopMessageCallbacks.forEach(callback => 
+        callback.callback(shopMessage, callback.scene));
 }
 
-export function addInvalidUnitPlacementListener(callback, scene) {
-    invalidUnitPlacementCallbacks.push({ 
+export function addShopMessageListener(callback, scene) {
+    shopMessageCallbacks.push({ 
         callback: callback,
         scene: scene
     });

@@ -1,5 +1,5 @@
 import { Unit, getUnitsJsonProperties } from "../model/Units";
-import { setShopSelection, addInvalidUnitPlacementListener, setInvalidUnitPlacementReason } from "../state/UIState";
+import { setShopSelection, addShopMessageListener, setShopMessage } from "../state/UIState";
 import { addTimerMsListener, addRoomStatusListener, RoomStatus, 
     getActiveShipMods, addShipModListener, addShipWeaponListener, getActiveShipWeapon, getRoomScene, getRoomStatus, isRoomShopBuffActive, addRoomShopBuff, addRoomResetListener } from "../state/RoomState";
 import { getResources, addCurrentResourcesListener, addResources } from "../state/ResourceState";
@@ -17,8 +17,8 @@ let purchasableUnits: Unit[];
 let currentResourcesText: Phaser.GameObjects.Text;
 let roomStatusText: Phaser.GameObjects.Text;
 let timerText: Phaser.GameObjects.Text;
-let invalidPlacementText: Phaser.GameObjects.Text;
-let invalidPlacementTextHideEvent: Phaser.Time.TimerEvent;
+let shopMessageText: Phaser.GameObjects.Text;
+let shopMessageTextHideEvent: Phaser.Time.TimerEvent;
 
 let shipWeaponIcon: Phaser.GameObjects.Image;
 let shipModIcons: Phaser.GameObjects.Image[] = [];
@@ -63,10 +63,10 @@ export class RoomUIScene extends Phaser.Scene {
         addRoomStatusListener(this.updateRoomStatus, this);
         this.updateRoomStatus(RoomStatus.COUNTDOWN);
 
-        invalidPlacementText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 130, "Invalid placement", { fontSize: "16px" }).setOrigin(0.5);
-        invalidPlacementText.setWordWrapWidth(unitSelectionBoxWidth - 20);
-        invalidPlacementText.setVisible(false);
-        addInvalidUnitPlacementListener(this.showInvalidUnitPlacement, this);
+        shopMessageText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 130, "Shop message", { fontSize: "16px" }).setOrigin(0.5);
+        shopMessageText.setWordWrapWidth(unitSelectionBoxWidth - 20);
+        shopMessageText.setVisible(false);
+        addShopMessageListener(this.showShopMessage, this);
 
         purchasableUnits = getUnitsJsonProperties((unit) => unit.purchasable);
         shopSelectionBoxes = []
@@ -107,17 +107,17 @@ export class RoomUIScene extends Phaser.Scene {
                 // Apply the buff
                 // Check that room is active and there are enough resources
                 if (getRoomStatus() == RoomStatus.DEFEAT || getRoomStatus() == RoomStatus.VICTORY) {
-                    setInvalidUnitPlacementReason("Room is no longer active!");
+                    setShopMessage("Room is no longer active!");
                     return;
                 }
                 // Prevent multiple of one buff in same room
                 if (isRoomShopBuffActive(buffNames[i])) {
-                    setInvalidUnitPlacementReason("Buff already active!");
+                    setShopMessage("Buff already active!");
                     return;
                 }
                 let price = this.cache.json.get("buffs")[buffNames[i]]["price"];
                 if (price > getResources()) {
-                    setInvalidUnitPlacementReason("Need more resources!");
+                    setShopMessage("Need more resources!");
                     return;
                 }
                 addResources(-price);
@@ -209,16 +209,16 @@ export class RoomUIScene extends Phaser.Scene {
         }
     }
 
-    showInvalidUnitPlacement(reason: string, scene: Phaser.Scene) {
-        if (reason != "") {
-            invalidPlacementText.setVisible(true);
-            invalidPlacementText.setText(reason);
-            if (invalidPlacementTextHideEvent) {
-                invalidPlacementTextHideEvent.remove();
+    showShopMessage(message: string, scene: Phaser.Scene) {
+        if (message != "") {
+            shopMessageText.setVisible(true);
+            shopMessageText.setText(message);
+            if (shopMessageTextHideEvent) {
+                shopMessageTextHideEvent.remove();
             }
             // Hide after a couple seconds
-            invalidPlacementTextHideEvent = scene.time.delayedCall(3000, () => {
-                invalidPlacementText.setVisible(false);
+            shopMessageTextHideEvent = scene.time.delayedCall(3000, () => {
+                shopMessageText.setVisible(false);
             });
         }
     }

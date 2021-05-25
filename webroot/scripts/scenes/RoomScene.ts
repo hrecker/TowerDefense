@@ -5,7 +5,7 @@ import { handleUnitHit, handleProjectileHit, updateFrameOverlaps, handleProjecti
 import * as ai from "../units/AI";
 import { Unit, createUnit, destroyUnit} from "../model/Units";
 import { ModType, createUnitMod, purgeExpiredMods } from "../model/Mods";
-import { addShopSelectionListener, getShopSelection, setInvalidUnitPlacementReason,  } from "../state/UIState";
+import { addShopSelectionListener, getShopSelection, setShopMessage  } from "../state/UIState";
 import { setTimerMs, setRoomStatus, getRoomStatus, RoomStatus, getActiveShipMods, getActiveShipWeapon, resetRoom } from "../state/RoomState";
 import { setResources, getResources, addResources } from "../state/ResourceState";
 
@@ -65,7 +65,7 @@ export class RoomScene extends Phaser.Scene {
             if (this.canPlaceShopSelection(pointer)) {
                 this.createUnitFromShopSelection(pointer);
             } else {
-                setInvalidUnitPlacementReason(lastInvalidPlacementReason);
+                setShopMessage(lastInvalidPlacementReason);
             }
         });
     }
