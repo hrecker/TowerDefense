@@ -67,6 +67,9 @@ const defaultLineOfSightWidth = 20;
 /** How often to redo pathfinding logic for homing units */
 const pathfindIntervalMs = 500;
 
+/** How close a unit wants to be with a shotgun weapon */
+const desiredDistanceForShotgun = 175;
+
 /** Width necessary for line of sight depends on weapon - unit wants to be able to shoot
  * at whatever it's looking at, bigger bullets need more space to avoid hitting obstacles.
  */
@@ -183,7 +186,13 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, 
     let hasLOS = onlyNeedLOS && (hasMod(unit, ModType.GHOST_PROJECTILES) || unit.weapon == "laser" ||
             checkLineOfSight(unit, lastPathTarget,
             determineLineOfSightWidth(unit), roomScene, debugGraphics, targetId));
-    if (hasLOS) {
+    // Check if unit considers itself close enough to the target to stop - only applies to shotgun weapon
+    let closeEnough = true;
+    if (unit.weapon == "shotgun") {
+        let distanceToTarget = unit.gameObj.getCenter().distance(new Phaser.Math.Vector2(lastPathTarget));
+        closeEnough = distanceToTarget < desiredDistanceForShotgun;
+    }
+    if (hasLOS && closeEnough) {
         unit.gameObj.setAcceleration(0);
         targetRotationAngle = new Phaser.Math.Vector2(lastPathTarget.x, lastPathTarget.y).subtract(unit.gameObj.body.center).angle();
     }
@@ -200,8 +209,8 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, 
         }
     }
 
-    // Exit early if LOS is all that's needed
-    if (hasLOS) {
+    // Exit early if LOS is reached and unit is close enough
+    if (hasLOS && closeEnough) {
         return;
     }
 
