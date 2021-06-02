@@ -31,6 +31,7 @@
         "health": 3,
         "purchasable": true,
         "price": 25,
+        "tooltip": "Stationary",
         "bodyType": "circle",
         "bodySize": 14,
         "bodyOffset": 2
@@ -43,6 +44,7 @@
         "health": 5,
         "purchasable": true,
         "price": 40,
+        "tooltip": "AOE damage",
         "bodyType": "circle",
         "bodySize": 14,
         "bodyOffset": 2
@@ -56,6 +58,7 @@
         "health": 5,
         "purchasable": true,
         "price": 25,
+        "tooltip": "Chases enemies",
         "bodyType": "circle",
         "bodySize": 14,
         "bodyOffset": 2
@@ -68,6 +71,7 @@
         "weaponDelay": 1000,
         "purchasable": true,
         "price": 50,
+        "tooltip": "Bullets explode",
         "bodyType": "circle",
         "bodySize": 14,
         "bodyOffset": 2,
@@ -85,6 +89,7 @@
         "weaponDelay": 600,
         "purchasable": true,
         "price": 75,
+        "tooltip": "Stays on walls",
         "bodyType": "circle",
         "bodySize": 14,
         "bodyOffset": 2,

@@ -43,6 +43,7 @@ export type Unit = {
     // Shop props
     purchasable: boolean;
     price: number;
+    tooltip: string;
     // Mods
     // Default mods that should be added when spawning this unit
     defaultMods: { [type: string]: ModProps };
@@ -88,6 +89,7 @@ export function loadUnitJson(unitJson) {
             playerOwned: unitProps["playerOwned"],
             purchasable: unitProps["purchasable"],
             price: unitProps["price"],
+            tooltip: unitProps["tooltip"],
             timeSincePathfindMs: 10000, // Set to a high number so the unit doesn't wait for first pathfind
             defaultMods: unitProps["defaultMods"],
             mods: {},

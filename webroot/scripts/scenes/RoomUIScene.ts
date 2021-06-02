@@ -6,13 +6,16 @@ import { getResources, addCurrentResourcesListener, addResources } from "../stat
 import { createGlobalMod, ModType } from "../model/Mods";
 
 const unitSelectionBoxWidth = 192;
-const shopSelectionBoxDefaultColor = 0x6400b5;
-const shopSelectionBoxHighlightColor = 0x8a57b3;
+const shopSelectionBoxDefaultColor = 0x999999;
+const shopSelectionBoxHighlightColor = 0xffffff;
 const modIconAlpha = 0.8;
 
 let unitSelectionCenterX;
 let activeShopSelectionIndex = -1;
-let shopSelectionBoxes: Phaser.GameObjects.Rectangle[];
+let shopSelectionIcons: Phaser.GameObjects.Group[];
+let shopSelectionTooltipBackground: Phaser.GameObjects.Rectangle;
+let shopSelectionTooltipText: Phaser.GameObjects.Text;
+let shopSelectionTooltip: Phaser.GameObjects.Group;
 let purchasableUnits: Unit[];
 let currentResourcesText: Phaser.GameObjects.Text;
 let roomStatusText: Phaser.GameObjects.Text;
@@ -53,7 +56,7 @@ export class RoomUIScene extends Phaser.Scene {
             this.clearShopSelection();
         });
 
-        currentResourcesText = this.add.text(unitSelectionCenterX, 15, getResources().toString()).setOrigin(0.5);
+        currentResourcesText = this.add.text(unitSelectionCenterX, 15, getResources().toString(), { fontSize: "24px" }).setOrigin(0.5);
         addCurrentResourcesListener(this.updateCurrentResourcesText, this);
         this.updateCurrentResourcesText(getResources());
 
@@ -69,31 +72,49 @@ export class RoomUIScene extends Phaser.Scene {
         addShopMessageListener(this.showShopMessage, this);
 
         purchasableUnits = getUnitsJsonProperties((unit) => unit.purchasable);
-        shopSelectionBoxes = []
+        shopSelectionIcons = [];
+        let leftSelectionX = unitSelectionCenterX - 60;
+        let selectionMargin = 60;
+        let unitYMargin = 80;
         for (let i = 0; i < purchasableUnits.length; i++) {
-            let selectionBox = this.add.rectangle(unitSelectionCenterX, 60 + i * 64,
-                unitSelectionBoxWidth - 20, 58, 0x6400b5);
-            shopSelectionBoxes.push(selectionBox);
-            selectionBox.setInteractive();
-            selectionBox.on("pointerdown", () => {
+            let selectionX = leftSelectionX + (i % 3) * selectionMargin;
+            let selectionY = Math.floor(i / 3) * unitYMargin + 60;
+            let backgroundImage = this.add.image(selectionX, selectionY, "unit_icon_background");
+            let icon = this.add.image(selectionX, selectionY, purchasableUnits[i].name);
+            let selectionIcon = this.add.group([backgroundImage, icon]);
+            selectionIcon.setTint(shopSelectionBoxDefaultColor);
+            backgroundImage.setInteractive();
+            backgroundImage.on("pointerover", () => {
+                shopSelectionTooltip.setVisible(true);
+                shopSelectionTooltipText.setText(purchasableUnits[i].tooltip);
+                shopSelectionTooltipBackground.displayWidth = shopSelectionTooltipText.width + 4;
+                shopSelectionTooltip.setY(selectionY + 60);
+            });
+            backgroundImage.on("pointerout", () => {
+                shopSelectionTooltip.setVisible(false);
+            });
+            backgroundImage.on("pointerdown", () => {
                 this.selectShopItem(i);
             });
-            this.add.text(unitSelectionCenterX, 44 + i * 64, purchasableUnits[i].name).setOrigin(0.5);
-            this.add.text(unitSelectionCenterX, 64 + i * 64, purchasableUnits[i].price.toString()).setOrigin(0.5);
+            shopSelectionIcons.push(selectionIcon);
+            this.add.text(selectionX, selectionY + unitYMargin - 40, purchasableUnits[i].price.toString()).setOrigin(0.5);
         }
+        shopSelectionTooltipBackground = this.add.rectangle(unitSelectionCenterX, this.game.renderer.height - 172, unitSelectionBoxWidth - 10, 24, 0xc4c4c4, 1);
+        shopSelectionTooltipText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 172, "Sample text", { color: "#000" }).setOrigin(0.5);
+        shopSelectionTooltip = this.add.group([shopSelectionTooltipBackground, shopSelectionTooltipText]);
+        shopSelectionTooltip.setVisible(false);
+        
 
         // Buff menu
         buffTooltipBackground = this.add.rectangle(unitSelectionCenterX, this.game.renderer.height - 172, unitSelectionBoxWidth - 10, 24, 0xc4c4c4, 1);
         buffTooltipText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 172, "Sample text", { color: "#000" }).setOrigin(0.5);
         buffTooltip = this.add.group([buffTooltipBackground, buffTooltipText]);
         buffTooltip.setVisible(false);
-        let buffMargin = 60;
         let buffNames = Object.keys(this.cache.json.get("buffs"));
-        let firstBuffX = unitSelectionCenterX - 60;
         for (let i = 0; i < buffNames.length; i++) {
-            let buffIcon = this.add.image(firstBuffX + (buffMargin * i), this.game.renderer.height - 230, buffNames[i]);
+            let buffIcon = this.add.image(leftSelectionX + (selectionMargin * i), this.game.renderer.height - 230, buffNames[i]);
             buffIcons.push(buffIcon);
-            this.add.text(firstBuffX + (buffMargin * i), this.game.renderer.height - 195, this.cache.json.get("buffs")[buffNames[i]]["price"]).setOrigin(0.5);
+            this.add.text(leftSelectionX + (selectionMargin * i), this.game.renderer.height - 195, this.cache.json.get("buffs")[buffNames[i]]["price"]).setOrigin(0.5);
             buffIcon.setInteractive();
             buffIcon.on("pointerover", () => {
                 buffTooltip.setVisible(true);
@@ -161,17 +182,17 @@ export class RoomUIScene extends Phaser.Scene {
             this.clearShopSelection();
         } else {
             if (activeShopSelectionIndex >= 0) {
-                shopSelectionBoxes[activeShopSelectionIndex].fillColor = shopSelectionBoxDefaultColor;
+                shopSelectionIcons[activeShopSelectionIndex].setTint(shopSelectionBoxDefaultColor);
             }
             activeShopSelectionIndex = index;
-            shopSelectionBoxes[index].fillColor = shopSelectionBoxHighlightColor;
+            shopSelectionIcons[index].setTint(shopSelectionBoxHighlightColor);
             setShopSelection(purchasableUnits[index]);
         }
     }
 
     clearShopSelection() {
         if (activeShopSelectionIndex >= 0) {
-            shopSelectionBoxes[activeShopSelectionIndex].fillColor = shopSelectionBoxDefaultColor;
+            shopSelectionIcons[activeShopSelectionIndex].setTint(shopSelectionBoxDefaultColor);
         }
         setShopSelection(null);
         activeShopSelectionIndex = -1;
