@@ -88,6 +88,7 @@ export class RoomUIScene extends Phaser.Scene {
                 shopSelectionTooltip.setVisible(true);
                 shopSelectionTooltipText.setText(purchasableUnits[i].tooltip);
                 shopSelectionTooltipBackground.displayWidth = shopSelectionTooltipText.width + 4;
+                shopSelectionTooltipBackground.displayHeight = shopSelectionTooltipText.height + 4;
                 shopSelectionTooltip.setY(selectionY + 60);
             });
             backgroundImage.on("pointerout", () => {
@@ -97,10 +98,11 @@ export class RoomUIScene extends Phaser.Scene {
                 this.selectShopItem(i);
             });
             shopSelectionIcons.push(selectionIcon);
-            this.add.text(selectionX, selectionY + unitYMargin - 40, purchasableUnits[i].price.toString()).setOrigin(0.5);
+            this.add.text(selectionX, selectionY + unitYMargin - 45, purchasableUnits[i].price.toString()).setOrigin(0.5);
         }
         shopSelectionTooltipBackground = this.add.rectangle(unitSelectionCenterX, this.game.renderer.height - 172, unitSelectionBoxWidth - 10, 24, 0xc4c4c4, 1);
-        shopSelectionTooltipText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 172, "Sample text", { color: "#000" }).setOrigin(0.5);
+        shopSelectionTooltipText = this.add.text(unitSelectionCenterX, this.game.renderer.height - 172, "Sample text", { color: "#000" }).
+                setOrigin(0.5).setWordWrapWidth(unitSelectionBoxWidth - 4).setAlign("center");
         shopSelectionTooltip = this.add.group([shopSelectionTooltipBackground, shopSelectionTooltipText]);
         shopSelectionTooltip.setVisible(false);
         
