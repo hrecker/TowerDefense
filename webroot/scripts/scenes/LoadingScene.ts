@@ -11,6 +11,7 @@ export class LoadingScene extends Phaser.Scene {
     preload() {
         // Load sprites
         this.load.image("block", "assets/sprites/block.png");
+        this.load.image("bomber", "assets/sprites/units/bomber.png");
         this.load.image("chaser", "assets/sprites/units/chaser.png");
         this.load.image("crawler", "assets/sprites/units/crawler.png");
         this.load.image("laser", "assets/sprites/laser.png");

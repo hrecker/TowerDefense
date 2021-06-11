@@ -49,6 +49,24 @@
         "bodySize": 14,
         "bodyOffset": 2
     },
+    "bomber": {
+        "name": "bomber",
+        "playerOwned": true,
+        "movement": "homing",
+        "maxSpeed": 80,
+        "maxAcceleration": 500,
+        "health": 1,
+        "purchasable": true,
+        "price": 50,
+        "tooltip": "Chases enemies, explodes on contact",
+        "bodyType": "circle",
+        "bodySize": 14,
+        "bodyOffset": 2,
+        "defaultMods": {
+            "DIE_ON_CONTACT": {},
+            "EXPLODE_ON_DEATH": {}
+        }
+    },
     "chaser": {
         "name": "chaser",
         "playerOwned": true,

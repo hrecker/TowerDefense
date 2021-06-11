@@ -2,6 +2,7 @@ import { RoomScene } from "../scenes/RoomScene";
 import { applyModCreationEffect, createUnitMod, getAllGlobalModsForUnit, getGlobalModsOfType, globalHasMod, Mod, ModProps, ModType } from "./Mods";
 import { flickerGameObject } from "../util/Util";
 import { getNewId } from "../state/IdState";
+import { createExplosion } from "../units/Weapon";
 
 let unitCache: { [name: string]: Unit };
 // Index for attached gameobjects not associated with a mod
@@ -257,6 +258,9 @@ export function updateHealth(unit: Unit, newHealth: number, newMaxHealth?: numbe
     }
 
     if (unit.health <= 0) {
+        if (hasMod(unit, ModType.EXPLODE_ON_DEATH)) {
+            createExplosion(unit.playerOwned, unit.gameObj.body.center, unit.gameObj.scene as RoomScene);
+        }
         destroyUnit(unit);
     } else {
         let healthFraction = unit.health / unit.maxHealth;
@@ -272,6 +276,10 @@ export function updateHealth(unit: Unit, newHealth: number, newMaxHealth?: numbe
 
 /** Cause the unit to take a certain amount of damage, and destroy it if health reaches zero. */
 export function takeDamage(unit: Unit, damage: number) {
+    if (damage <= 0) {
+        return;
+    }
+
     // Apply any shield mods
     if (hasMod(unit, ModType.SHIELD)) {
         unit.mods[ModType.SHIELD].forEach(mod => {

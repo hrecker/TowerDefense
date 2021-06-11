@@ -135,12 +135,18 @@ export function handleUnitHit(obj1: Phaser.Types.Physics.Arcade.ImageWithDynamic
         other = unit1;
     }
 
+    let shipDamage = 1 + getDamageDiff(other);
+
     if (hasMod(unit1, ModType.NO_CONTACT_DAMAGE) || hasMod(unit2, ModType.NO_CONTACT_DAMAGE)) {
-        return;
+        shipDamage = 0;
     }
 
-    let damage = 1 + getDamageDiff(other);
-    takeDamage(ship, damage);
+    if (hasMod(other, ModType.DIE_ON_CONTACT)) {
+        shipDamage = 0;
+        takeDamage(other, other.maxHealth);
+    }
+
+    takeDamage(ship, shipDamage);
 }
 
 /** Handle projectiles that need special behavior when hitting the room geometry (destroy, bounce, explode, etc.) */
