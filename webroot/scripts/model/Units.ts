@@ -259,7 +259,7 @@ export function updateHealth(unit: Unit, newHealth: number, newMaxHealth?: numbe
 
     if (unit.health <= 0) {
         if (hasMod(unit, ModType.EXPLODE_ON_DEATH)) {
-            createExplosion(unit.playerOwned, unit.gameObj.body.center, unit.gameObj.scene as RoomScene);
+            createExplosion(unit.playerOwned, unit.gameObj.body.center, unit.gameObj.scene as RoomScene, null, null, null, unit);
         }
         destroyUnit(unit);
     } else {
