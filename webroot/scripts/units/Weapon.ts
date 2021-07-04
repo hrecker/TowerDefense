@@ -1,4 +1,4 @@
-import { ModType, weaponAndModCompatible } from "../model/Mods";
+import { getSpeedMultipliers, ModType, weaponAndModCompatible } from "../model/Mods";
 import { getAllModsOfType, hasMod, Unit } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 import { getNewId } from "../state/IdState";
@@ -140,6 +140,12 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
     }
     explosion.body.setCircle(size);
     explosion.setName(explosionName);
+    
+    if (unit && hasMod(unit, ModType.SLOWING_PROJECTILES)) {
+        let mults = getSpeedMultipliers(getAllModsOfType(unit, ModType.SLOWING_PROJECTILES));
+        explosion.setData("speedMultipliers", mults);
+    }
+
     // Destroy explosion after some time passes
     if (!lifetimeMs) {
         lifetimeMs = explosionLifetimeMs;

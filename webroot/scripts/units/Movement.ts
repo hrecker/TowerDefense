@@ -1,4 +1,4 @@
-import { Mod, ModType } from "../model/Mods";
+import { getSpeedMultipliers, Mod, ModType } from "../model/Mods";
 import { Unit, hasMod, getAllModsOfType } from "../model/Units";
 import { RoomScene, tileWidthPixels } from "../scenes/RoomScene";
 import { getTargetPos } from "./AI";
@@ -174,10 +174,12 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, 
     if (!unit.path || unit.path.length == 0 || unit.currentPathIndex < 0 || unit.currentPathIndex >= unit.path.length) {
         return;
     }
+    let maxAcceleration = getMaxAcceleration(unit);
+    let maxAngularSpeed = getMaxAngularSpeed(unit);
 
     // Get direction unit should move to hit target
     let target = new Phaser.Math.Vector2(unit.path[unit.currentPathIndex]);
-    let homingDir = homingDirection(unit.gameObj.body, target, unit.maxAcceleration);
+    let homingDir = homingDirection(unit.gameObj.body, target, maxAcceleration);
     let targetRotationAngle = homingDir.angle();
 
     // If the unit only needs line of sight and it has it, don't need to move any more.
@@ -199,7 +201,7 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, 
 
     if (unit.rotation) {
         // Rotate towards the target        
-        unit.gameObj.setRotation(Phaser.Math.Angle.RotateTo(unit.gameObj.rotation, targetRotationAngle, unit.maxAngularSpeed));
+        unit.gameObj.setRotation(Phaser.Math.Angle.RotateTo(unit.gameObj.rotation, targetRotationAngle, maxAngularSpeed));
         // Draw line being rotated towards
         if (debugGraphics) {
             let targetStretched = Phaser.Math.Vector2.RIGHT.clone().rotate(targetRotationAngle).scale(50);
@@ -215,15 +217,38 @@ function moveHomingUnit(unit: Unit, onlyNeedLOS: boolean, roomScene: RoomScene, 
     }
 
     // Accelerate towards the target
-    unit.gameObj.setAcceleration(homingDir.x * unit.maxAcceleration, homingDir.y * unit.maxAcceleration);
+    unit.gameObj.setAcceleration(homingDir.x * maxAcceleration, homingDir.y * maxAcceleration);
 
     // Update current target along path if appropriate
     updatePathTarget(unit);
 }
 
+//TODO make it so these three "getMaxX" methods aren't getting recalculated so often
+function getMaxSpeed(unit: Unit) {
+    let maxSpeed = unit.maxSpeed;
+    let mults = getSpeedMultipliers(getAllModsOfType(unit, ModType.SPEED_BUFF));
+    maxSpeed = mults.maxSpeedMultiplier * maxSpeed;
+    return maxSpeed;
+}
+
+function getMaxAcceleration(unit: Unit) {
+    let maxAcceleration = unit.maxAcceleration;
+    let mults = getSpeedMultipliers(getAllModsOfType(unit, ModType.SPEED_BUFF));
+    maxAcceleration = mults.maxAccelerationMultiplier * maxAcceleration;
+    return maxAcceleration;
+}
+
+function getMaxAngularSpeed(unit: Unit) {
+    let maxAngularSpeed = unit.maxAngularSpeed;
+    let mults = getSpeedMultipliers(getAllModsOfType(unit, ModType.SPEED_BUFF));
+    maxAngularSpeed = mults.maxAngularSpeedMultiplier * maxAngularSpeed;
+    return maxAngularSpeed;
+}
+
 function clampUnitSpeed(unit: Unit) {
-    if (unit.gameObj.body.velocity.length() > unit.maxSpeed) {
-        let newVel = unit.gameObj.body.velocity.normalize().scale(unit.maxSpeed);
+    let maxSpeed = getMaxSpeed(unit);
+    if (unit.gameObj.body.velocity.length() > maxSpeed) {
+        let newVel = unit.gameObj.body.velocity.normalize().scale(maxSpeed);
         unit.gameObj.setVelocity(newVel.x, newVel.y);
     }
 }
@@ -338,15 +363,16 @@ export function homingDirection(body : Phaser.Physics.Arcade.Body, target: Phase
 const crawlerErrorMargin = 10;
 
 function moveCrawlerUnit(unit: Unit, target: Phaser.Math.Vector2, wall: string) {
+    let maxSpeed = getMaxSpeed(unit);
     switch (wall) {
         case 'N':
         case 'S':
             let xDiff = Math.abs(target.x - unit.gameObj.body.center.x);
             if (xDiff > crawlerErrorMargin) {
                 if (target.x > unit.gameObj.body.center.x && (unit.gameObj.x < unit.maxX || unit.maxX == -1)) {
-                    unit.gameObj.setVelocity(unit.maxSpeed, 0);
+                    unit.gameObj.setVelocity(maxSpeed, 0);
                 } else if (target.x < unit.gameObj.body.center.x && (unit.gameObj.x > unit.minX || unit.maxX == -1)) {
-                    unit.gameObj.setVelocity(-unit.maxSpeed, 0);
+                    unit.gameObj.setVelocity(-maxSpeed, 0);
                 }
             } else {
                 unit.gameObj.setVelocity(0);
@@ -357,9 +383,9 @@ function moveCrawlerUnit(unit: Unit, target: Phaser.Math.Vector2, wall: string) 
             let yDiff = Math.abs(target.y - unit.gameObj.body.center.y);
             if (yDiff > crawlerErrorMargin) {
                 if (target.y > unit.gameObj.body.center.y && (unit.gameObj.y < unit.maxY || unit.maxY == -1)) {
-                    unit.gameObj.setVelocity(0, unit.maxSpeed);
+                    unit.gameObj.setVelocity(0, maxSpeed);
                 } else if (target.y < unit.gameObj.body.center.y && (unit.gameObj.y > unit.minY || unit.minY == -1)) {
-                    unit.gameObj.setVelocity(0, -unit.maxSpeed);
+                    unit.gameObj.setVelocity(0, -maxSpeed);
                 }
             } else {
                 unit.gameObj.setVelocity(0);

@@ -46,7 +46,13 @@ export type ModProps = {
     // ModType.DAMAGE_BUFF
     damageDiff?: number,
     // ModType.HEALTH_BUFF
-    healthDiff?: number
+    healthDiff?: number,
+    // ModType.SPEED_BUFF and ModType.SLOWING_PROJECTILES
+    maxSpeedMultiplier?: number,
+    maxAccelerationMultiplier?: number,
+    maxAngularSpeedMultiplier?: number,
+    // ModType.SLOWING_PROJECTILES
+    slowDuration?: number
 }
 
 /** Types of Mods that can be created */
@@ -61,7 +67,9 @@ export enum ModType {
     DIE_ON_CONTACT = "DIE_ON_CONTACT",
     DAMAGE_BUFF = "DAMAGE_BUFF",
     HEALTH_BUFF = "HEALTH_BUFF",
-    EXPLODE_ON_DEATH = "EXPLODE_ON_DEATH"
+    EXPLODE_ON_DEATH = "EXPLODE_ON_DEATH",
+    SPEED_BUFF = "SPEED_BUFF",
+    SLOWING_PROJECTILES = "SLOWING_PROJECTILES"
 };
 
 /** Create a Mod attached to a Unit. The passed in mod should
@@ -231,4 +239,42 @@ export function weaponAndModCompatible(unitName: string, weapon: string, modType
     //TODO this is really inefficient, iterating every time rather than using a table/cache
     let incompatibleMods = scene.cache.json.get("shipWeapons")[weapon]["incompatibleMods"];
     return !incompatibleMods || !incompatibleMods.includes(modType);
+}
+
+export function getSpeedMultipliers(mods: Mod[]) {
+    let maxSpeedMultiplier = 1;
+    let maxAccelerationMultiplier = 1;
+    let maxAngularSpeedMultiplier = 1;
+    let slowDuration = -1;
+    mods.forEach(mod => {
+        if (mod.props.maxSpeedMultiplier) {
+            maxSpeedMultiplier += mod.props.maxSpeedMultiplier - 1;
+        }
+        if (mod.props.maxAccelerationMultiplier) {
+            maxAccelerationMultiplier += mod.props.maxAccelerationMultiplier - 1;
+        }
+        if (mod.props.maxAngularSpeedMultiplier) {
+            maxAngularSpeedMultiplier += mod.props.maxAngularSpeedMultiplier - 1;
+        }
+        if (mod.props.slowDuration) {
+            slowDuration = Math.max(slowDuration, mod.props.slowDuration);
+        }
+    });
+
+    if (maxSpeedMultiplier < 0) {
+        maxSpeedMultiplier = 0;
+    }
+    if (maxAccelerationMultiplier < 0) {
+        maxAccelerationMultiplier = 0;
+    }
+    if (maxAngularSpeedMultiplier < 0) {
+        maxAngularSpeedMultiplier = 0;
+    }
+
+    return {
+        maxSpeedMultiplier: maxSpeedMultiplier,
+        maxAccelerationMultiplier: maxAccelerationMultiplier,
+        maxAngularSpeedMultiplier: maxAngularSpeedMultiplier,
+        slowDuration: slowDuration
+    };
 }

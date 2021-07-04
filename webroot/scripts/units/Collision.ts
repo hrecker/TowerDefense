@@ -1,7 +1,8 @@
-import { ModType } from "../model/Mods";
+import { createUnitMod, ModType } from "../model/Mods";
 import { Unit, takeDamage, hasMod } from "../model/Units";
 import { RoomScene } from "../scenes/RoomScene";
 import { WithId } from "../state/IdState";
+import { getRoomScene } from "../state/RoomState";
 import { createExplosion, getDamageDiff, projectileNames } from "../units/Weapon";
 
 let activeOverlaps: { [id: string]: number } = {};
@@ -99,6 +100,17 @@ export function handleProjectileHit(obj1: Phaser.Types.Physics.Arcade.ImageWithD
     activeOverlaps[overlapId] = 1;
 
     if (unit) {
+        if (proj.getData("speedMultipliers")) {
+            let mults = proj.getData("speedMultipliers");
+            //TODO visual indicator here
+            createUnitMod(unit, ModType.SPEED_BUFF, 
+                { maxSpeedMultiplier: mults.maxSpeedMultiplier, 
+                    maxAccelerationMultiplier: mults.maxAccelerationMultiplier, 
+                    maxAngularSpeedMultiplier: mults.maxAngularSpeedMultiplier,
+                    duration: mults.slowDuration }, 
+                    getRoomScene());
+        }
+
         let damage = 1;
         if (damageDiff) {
             damage += damageDiff;

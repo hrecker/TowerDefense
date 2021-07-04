@@ -49,6 +49,30 @@
         "bodySize": 14,
         "bodyOffset": 2
     },
+    "ice_zapper": {
+        "name": "ice_zapper",
+        "weapon": "zapper",
+        "weaponDelay": 1000,
+        "playerOwned": true,
+        "health": 5,
+        "purchasable": true,
+        "price": 20,
+        "tooltip": "Stationary, applies slow debuff",
+        "bodyType": "circle",
+        "bodySize": 14,
+        "bodyOffset": 2,
+        "defaultMods": {
+            "DAMAGE_BUFF": {
+                "damageDiff": -1
+            },
+            "SLOWING_PROJECTILES": {
+                "maxAccelerationMultiplier": 0.7,
+                "maxSpeedMultiplier": 0.7,
+                "maxAngularSpeedMultiplier": 0.7,
+                "slowDuration": 1500
+            }
+        }
+    },
     "bomber": {
         "name": "bomber",
         "playerOwned": true,
