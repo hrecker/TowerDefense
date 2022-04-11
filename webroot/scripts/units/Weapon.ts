@@ -124,12 +124,20 @@ export function createExplosion(playerOwned: boolean, position: Phaser.Math.Vect
         }
     }
 
+    // Apply projectile scale
+    let scale = 1;
+    if (unit && hasMod(unit, ModType.PROJECTILE_SCALE) && weaponAndModCompatible(unit.name, unit.weapon, ModType.PROJECTILE_SCALE, scene)) {
+        getAllModsOfType(unit, ModType.PROJECTILE_SCALE).forEach(mod => {
+            scale = Math.max(scale, mod.props.projectileScale);
+        });
+    }
     let explosion = scene.physics.add.image(position.x, position.y, explosionName);
     bulletGroup.add(explosion);
     explosion.setData("isAOE", true);
     explosion.setData("id", getNewId());
     explosion.setData("playerOwned", playerOwned);
     explosion.setAlpha(0.3);
+    explosion.setScale(scale);
     // Allow damage mods only if explosion is directly from a unit (exploding bullets don't get a damage mod on the explosion)
     if (unit) {
         let damageDiff = getDamageDiff(unit, true, scene);

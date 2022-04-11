@@ -236,7 +236,6 @@ export function weaponAndModCompatible(unitName: string, weapon: string, modType
         return true;
     }
 
-    //TODO this is really inefficient, iterating every time rather than using a table/cache
     let incompatibleMods = scene.cache.json.get("shipWeapons")[weapon]["incompatibleMods"];
     return !incompatibleMods || !incompatibleMods.includes(modType);
 }
