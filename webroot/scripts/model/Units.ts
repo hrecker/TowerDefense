@@ -20,6 +20,9 @@ export type Unit = {
     id: number;
     gameObj: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
     playerOwned: boolean;
+    bodyType: string;
+    bodySize: number;
+    bodyOffset: number;
     // Movement props
     movement: string;
     maxSpeed: number;
@@ -77,6 +80,9 @@ export function loadUnitJson(unitJson) {
             maxX: -1,
             minY: -1,
             maxY: -1,
+            bodyType: unitProps["bodyType"],
+            bodySize: unitProps["bodySize"],
+            bodyOffset: unitProps["bodyOffset"],
             rotation: unitProps["rotation"],
             health: unitProps["health"],
             maxHealth: unitProps["health"],
